@@ -1,0 +1,394 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  /* Custom brand accent */
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-orange-foreground: var(--brand-orange-foreground);
+  --color-brand-orange-soft: var(--brand-orange-soft);
+  --color-brand-orange-border: var(--brand-orange-border);
+
+  /* Base theme mappings */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar mappings */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius scale */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Status colors */
+  --color-status-pending: var(--status-pending);
+  --color-status-pending-fg: var(--status-pending-fg);
+  --color-status-pending-border: var(--status-pending-border);
+
+  --color-status-confirmed: var(--status-confirmed);
+  --color-status-confirmed-fg: var(--status-confirmed-fg);
+  --color-status-confirmed-border: var(--status-confirmed-border);
+
+  --color-status-in-progress: var(--status-in-progress);
+  --color-status-in-progress-fg: var(--status-in-progress-fg);
+  --color-status-in-progress-border: var(--status-in-progress-border);
+
+  --color-status-completed: var(--status-completed);
+  --color-status-completed-fg: var(--status-completed-fg);
+  --color-status-completed-border: var(--status-completed-border);
+
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-cancelled-fg: var(--status-cancelled-fg);
+  --color-status-cancelled-border: var(--status-cancelled-border);
+}
+
+:root {
+  color-scheme: light;
+  --radius: 0.75rem;
+
+  /* =========================
+     LIGHT MODE (clean, soft, dashboard-friendly)
+     ========================= */
+  --background: oklch(0.965 0.003 255);
+  --foreground: oklch(0.220 0.012 260);
+
+  --card: oklch(0.992 0.001 255);
+  --card-foreground: oklch(0.220 0.012 260);
+
+  --popover: oklch(0.995 0.001 255);
+  --popover-foreground: oklch(0.220 0.012 260);
+
+
+  --primary: var(--brand-orange);
+  --primary-foreground: oklch(0.18 0.02 58);
+  --ring: var(--brand-orange);
+
+  --secondary: oklch(0.945 0.004 255);
+  --secondary-foreground: oklch(0.255 0.010 260);
+
+  --muted: oklch(0.948 0.003 255);
+  --muted-foreground: oklch(0.520 0.012 260);
+
+  --accent: oklch(0.940 0.006 255);
+  --accent-foreground: oklch(0.235 0.010 260);
+
+  --destructive: oklch(0.620 0.220 25);
+
+  /* Borders slightly stronger than before -> cleaner layout */
+  --border: oklch(0.885 0.005 255);
+  --input: oklch(0.900 0.005 255);
+  /* --ring: oklch(0.640 0.145 252); */
+
+  /* Charts */
+  --chart-1: oklch(0.650 0.145 252); /* blue */
+  --chart-2: oklch(0.760 0.105 170); /* mint */
+  --chart-3: oklch(0.800 0.085 230); /* light blue */
+  --chart-4: oklch(0.760 0.145 58);  /* orange accent */
+  --chart-5: oklch(0.710 0.095 300); /* violet */
+
+  /* Sidebar - slightly darker than content for separation */
+  --sidebar: oklch(0.935 0.003 255);
+  --sidebar-foreground: oklch(0.235 0.010 260);
+  --sidebar-primary: oklch(0.640 0.145 252);
+  --sidebar-primary-foreground: oklch(0.985 0.002 255);
+  --sidebar-accent: oklch(0.915 0.003 255);
+  --sidebar-accent-foreground: oklch(0.235 0.010 260);
+  --sidebar-border: oklch(0.865 0.004 255);
+  --sidebar-ring: oklch(0.640 0.145 252);
+
+  /* Orange brand accent (subtle, premium) */
+  --brand-orange: oklch(0.730 0.150 58);
+  --brand-orange-foreground: oklch(0.220 0.030 55);
+  --brand-orange-soft: oklch(0.950 0.028 72);
+  --brand-orange-border: oklch(0.850 0.070 66);
+
+  /* Status colors (light) */
+  --status-pending: oklch(0.955 0.040 85);
+  --status-pending-fg: oklch(0.420 0.070 75);
+  --status-pending-border: oklch(0.830 0.075 82);
+
+  --status-confirmed: oklch(0.955 0.035 160);
+  --status-confirmed-fg: oklch(0.360 0.060 160);
+  --status-confirmed-border: oklch(0.805 0.070 160);
+
+  --status-in-progress: oklch(0.955 0.035 245);
+  --status-in-progress-fg: oklch(0.380 0.070 248);
+  --status-in-progress-border: oklch(0.810 0.075 245);
+
+  --status-completed: oklch(0.955 0.030 285);
+  --status-completed-fg: oklch(0.380 0.065 282);
+  --status-completed-border: oklch(0.805 0.070 285);
+
+  --status-cancelled: oklch(0.955 0.035 25);
+  --status-cancelled-fg: oklch(0.420 0.085 22);
+  --status-cancelled-border: oklch(0.810 0.080 22);
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* =========================
+     DARK MODE (premium graphite, not pure black)
+     ========================= */
+  --background: oklch(0.115 0.006 255);
+  --foreground: oklch(0.935 0.006 255);
+
+  --card: oklch(0.150 0.007 255);
+  --card-foreground: oklch(0.935 0.006 255);
+
+  --popover: oklch(0.155 0.007 255);
+  --popover-foreground: oklch(0.935 0.006 255);
+
+  /* Blue primary (more controlled glow) */
+  --primary: oklch(0.735 0.120 248);
+  --primary-foreground: oklch(0.160 0.010 255);
+
+  --secondary: oklch(0.195 0.007 255);
+  --secondary-foreground: oklch(0.920 0.005 255);
+
+  --muted: oklch(0.185 0.006 255);
+  --muted-foreground: oklch(0.700 0.010 255);
+
+  --accent: oklch(0.210 0.007 255);
+  --accent-foreground: oklch(0.935 0.006 255);
+
+  --destructive: oklch(0.700 0.180 22);
+
+  /* Borders stronger for grid/calendar readability */
+  --border: oklch(0.285 0.006 255);
+  --input: oklch(0.300 0.006 255);
+  --ring: oklch(0.735 0.120 248);
+
+  /* Charts */
+  --chart-1: oklch(0.720 0.120 248); /* blue */
+  --chart-2: oklch(0.760 0.100 165); /* mint */
+  --chart-3: oklch(0.820 0.065 230); /* pale blue */
+  --chart-4: oklch(0.770 0.145 58);  /* orange */
+  --chart-5: oklch(0.730 0.090 300); /* violet */
+
+  /* Sidebar - slightly darker than content */
+  --sidebar: oklch(0.130 0.006 255);
+  --sidebar-foreground: oklch(0.915 0.006 255);
+  --sidebar-primary: oklch(0.735 0.120 248);
+  --sidebar-primary-foreground: oklch(0.160 0.010 255);
+  --sidebar-accent: oklch(0.175 0.006 255);
+  --sidebar-accent-foreground: oklch(0.915 0.006 255);
+  --sidebar-border: oklch(0.245 0.006 255);
+  --sidebar-ring: oklch(0.735 0.120 248);
+
+  /* Orange accent (dark mode) */
+  --brand-orange: oklch(0.760 0.145 58);
+  --brand-orange-foreground: oklch(0.190 0.020 58);
+  --brand-orange-soft: oklch(0.260 0.035 58);
+  --brand-orange-border: oklch(0.450 0.070 58);
+
+  /* Status colors (dark) - readable, not neon */
+  --status-pending: oklch(0.240 0.035 80);
+  --status-pending-fg: oklch(0.860 0.045 82);
+  --status-pending-border: oklch(0.450 0.070 80);
+
+  --status-confirmed: oklch(0.225 0.032 160);
+  --status-confirmed-fg: oklch(0.860 0.040 165);
+  --status-confirmed-border: oklch(0.430 0.065 160);
+
+  --status-in-progress: oklch(0.225 0.040 245);
+  --status-in-progress-fg: oklch(0.860 0.045 248);
+  --status-in-progress-border: oklch(0.435 0.070 245);
+
+  --status-completed: oklch(0.230 0.032 285);
+  --status-completed-fg: oklch(0.860 0.040 285);
+  --status-completed-border: oklch(0.430 0.065 285);
+
+  --status-cancelled: oklch(0.245 0.040 20);
+  --status-cancelled-fg: oklch(0.865 0.045 20);
+  --status-cancelled-border: oklch(0.445 0.070 20);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html,
+  body {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 22%, transparent);
+    color: var(--foreground);
+  }
+}
+
+/* =========================
+   FullCalendar harmonization (VERY IMPORTANT for your screen)
+   ========================= */
+@layer base {
+  .fc {
+    /* FC variables */
+    --fc-border-color: var(--border);
+    --fc-page-bg-color: var(--card);
+    --fc-neutral-bg-color: var(--muted);
+    --fc-neutral-text-color: var(--muted-foreground);
+    --fc-list-event-hover-bg-color: var(--accent);
+    --fc-today-bg-color: color-mix(in oklab, var(--primary) 9%, var(--card));
+
+    color: var(--foreground);
+  }
+
+  /* Frame + grid */
+  .fc .fc-scrollgrid,
+  .fc .fc-theme-standard td,
+  .fc .fc-theme-standard th {
+    border-color: var(--border);
+  }
+
+  .fc .fc-scrollgrid {
+    background: var(--card);
+    border-radius: calc(var(--radius) + 4px);
+    overflow: hidden;
+  }
+
+  /* Header row (Pn/Wt/Śr...) */
+  .fc .fc-col-header-cell {
+    background: color-mix(in oklab, var(--card) 88%, var(--muted));
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  .fc .fc-col-header-cell-cushion {
+    padding: 0.5rem 0.25rem;
+  }
+
+  /* Day cells */
+  .fc .fc-daygrid-day {
+    background: var(--card);
+  }
+
+  .fc .fc-day-other {
+    background: color-mix(in oklab, var(--muted) 70%, var(--card));
+  }
+
+  .fc .fc-daygrid-day-number {
+    color: var(--foreground);
+    font-weight: 500;
+    opacity: 0.9;
+  }
+
+  .fc .fc-day-other .fc-daygrid-day-number {
+    color: var(--muted-foreground);
+    opacity: 0.75;
+  }
+
+  /* Today */
+  .fc .fc-day-today {
+    background: var(--fc-today-bg-color) ;
+  }
+
+  /* Event cards (default fallback if you don't style events yet) */
+  .fc .fc-event {
+    border: 1px solid color-mix(in oklab, var(--primary) 55%, var(--border));
+    background: color-mix(in oklab, var(--primary) 18%, var(--card));
+    color: var(--foreground);
+    border-radius: 0.5rem;
+  }
+
+  .fc .fc-event:hover {
+    filter: brightness(1.03);
+  }
+
+  /* Time grid / agenda separators */
+  .fc .fc-timegrid-slot,
+  .fc .fc-timegrid-axis,
+  .fc .fc-list-day-cushion {
+    border-color: var(--border);
+  }
+
+  /* Toolbar buttons (if using native FullCalendar toolbar anywhere) */
+  .fc .fc-button {
+    box-shadow: none ;
+    border-radius: 0.65rem ;
+    border: 1px solid var(--border) ;
+    background: var(--secondary) ;
+    color: var(--secondary-foreground) ;
+    transition: all 0.15s ease;
+  }
+
+  .fc .fc-button:hover {
+    background: var(--accent) ;
+    color: var(--accent-foreground) ;
+    border-color: color-mix(in oklab, var(--border) 60%, var(--primary)) ;
+  }
+
+  .fc .fc-button.fc-button-active,
+  .fc .fc-button-primary:not(:disabled).fc-button-active {
+    background: var(--primary) ;
+    color: var(--primary-foreground) ;
+    border-color: color-mix(in oklab, var(--primary) 70%, var(--border)) ;
+  }
+
+  /* More contrast in dark mode for calendar specifically */
+  .dark .fc {
+    --fc-today-bg-color: color-mix(in oklab, var(--primary) 14%, var(--card));
+  }
+
+  .dark .fc .fc-col-header-cell {
+    background: color-mix(in oklab, var(--card) 70%, var(--muted));
+  }
+
+  .dark .fc .fc-daygrid-day {
+    background: color-mix(in oklab, var(--card) 94%, black);
+  }
+
+  .dark .fc .fc-day-other {
+    background: color-mix(in oklab, var(--muted) 60%, var(--card));
+  }
+}
