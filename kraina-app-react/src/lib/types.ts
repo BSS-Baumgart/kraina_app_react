@@ -47,6 +47,8 @@ export interface EmployeeAssignment {
   didDisassembly: boolean
   assemblyTime?: string
   disassemblyTime?: string
+  assemblyRateSnapshot?: number
+  disassemblyRateSnapshot?: number
 }
 
 export interface AssemblyRecord {
@@ -85,6 +87,17 @@ export interface Rental {
   // computed
   totalCost?: number
   hasContract?: boolean
+}
+
+export interface Client {
+  id: string
+  name: string
+  phone: string
+  email?: string
+  address?: string
+  notes?: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface AuthSession {

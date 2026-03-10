@@ -1,12 +1,14 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Calendar, Views, dateFnsLocalizer, Messages } from 'react-big-calendar'
 import * as dateFns from 'date-fns'
 import { pl } from 'date-fns/locale'
 import { useRentals } from '@/hooks/useRentals'
 import { useUIStore } from '@/store/ui.store'
 import { CalendarHeader } from './CalendarHeader'
+import { RentalDetailDialog } from '@/components/rentals/RentalDetailDialog'
+import { Rental } from '@/lib/types'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import '@/styles/calendar.css'
 
@@ -60,6 +62,7 @@ interface CalendarEvent {
 export function CalendarView() {
   const { rentals = [], isLoading } = useRentals()
   const { selectedDate, calendarView, setSelectedDate, setCalendarView } = useUIStore()
+  const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
 
   // Convert rentals to calendar events for react-big-calendar
   const events: CalendarEvent[] = useMemo(() => {
@@ -98,9 +101,8 @@ export function CalendarView() {
   }, [rentals])
 
   const handleSelectEvent = (event: CalendarEvent) => {
-    console.log('Event selected:', event)
-    // TODO: Open rental details modal or navigate to rental edit page
-    useUIStore.setState({ selectedRentalId: event.resource.rentalId })
+    const rental = rentals.find((r) => r.id === event.resource.rentalId)
+    if (rental) setSelectedRental(rental)
   }
 
   const handleNavigate = (date: Date) => {
@@ -156,6 +158,11 @@ export function CalendarView() {
         toolbar={false}
         popup
         selectable
+      />
+
+      <RentalDetailDialog
+        rental={selectedRental}
+        onClose={() => setSelectedRental(null)}
       />
     </div>
   )

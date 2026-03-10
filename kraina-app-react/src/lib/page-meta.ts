@@ -9,8 +9,8 @@ export const pageMeta: Record<string, PageMeta> = {
   '/app/statistics/revenue':     { title: '💰 Przychody',           description: 'Analiza przychodów i trendów przychodowych.' },
   '/app/statistics/performance': { title: '⚡ Performance',         description: 'Wydajność i metryki operacyjne.' },
   '/app/statistics/costs':       { title: '💸 Analiza kosztów',     description: 'Szczegółowa analiza kosztów i marż zysku.' },
-  '/app/employees':              { title: '👥 Pracownicy',          description: 'Zarządzaj pracownikami i ich przydzieleniami.' },
-  '/app/users':                  { title: '👤 Użytkownicy',         description: 'Zarządzaj kontami użytkowników.' },
+  '/app/clients':                { title: '👤 Klienci',              description: 'Przeglądaj klientów i ich historię rezerwacji.' },
+  '/app/users':                  { title: '👥 Użytkownicy',         description: 'Zarządzaj użytkownikami i ich uprawnieniami.' },
   '/app/settings':               { title: '⚙️ Ustawienia',          description: 'Konfiguracja aplikacji i preferencji.' },
   '/app/profile':                { title: '👤 Profil',              description: 'Zarządzaj swoim profilem i ustawieniami.' },
 }

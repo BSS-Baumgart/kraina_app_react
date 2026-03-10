@@ -33,16 +33,13 @@ export default function AttractionsPage() {
   const toggleMutation = useToggleAttractionStatus()
   const deleteMutation = useDeleteAttraction()
   const { user } = useAuth()
-  
-  // Stan dla wybranej atrakcji do wyświetlenia w arkuszu
+
   const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
   
-  // Stany formularza
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [attractionToEdit, setAttractionToEdit] = useState<Attraction | null>(null)
 
-  // Zgodnie z wytycznymi, zarządzanie atrakcjami dostępne dla adminów i właścicieli
   const canManageAttractions = user?.role === 'admin' || user?.role === 'owner'
   
   if (error) {
@@ -96,7 +93,6 @@ export default function AttractionsPage() {
             <Card key={attraction.id} className="overflow-hidden flex flex-col hover:shadow-md transition-shadow border-border">
               <div className="relative h-48 w-full bg-muted flex items-center justify-center">
                 {attraction.primaryImageUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={attraction.primaryImageUrl}
                     alt={attraction.name}
@@ -106,14 +102,12 @@ export default function AttractionsPage() {
                   <span className="text-muted-foreground text-sm">Brak zdjęcia</span>
                 )}
                 
-                {/* Oznaczenie deaktywowanej atrakcji (dla adminów widoczne) */}
                 {!attraction.isActive && (
                   <div className="absolute top-2 right-2 z-10">
                     <Badge variant="destructive" className="shadow-sm">Nieaktywna</Badge>
                   </div>
                 )}
                 
-                {/* Plakietka kategorii */}
                 {attraction.category && (
                   <div className="absolute top-2 left-2 z-10">
                     <Badge variant="secondary" className="bg-background/80 backdrop-blur-md shadow-sm">
@@ -169,14 +163,13 @@ export default function AttractionsPage() {
         </div>
       )}
 
-{/* Modal szczegółów atrakcji */}
       <Dialog open={!!selectedAttraction} onOpenChange={(open) => {
         if (!open) {
           setSelectedAttraction(null)
           setSelectedImageIndex(0)
         }
       }}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto w-full p-0 gap-0">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto p-0 gap-0">
           {selectedAttraction && (
             <>
               <div className="p-6 pb-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
@@ -205,7 +198,6 @@ export default function AttractionsPage() {
               </div>
 
               <div className="p-6 space-y-10">
-                {/* Zdjęcia */}
                 <div className="space-y-4">
                   <div className="w-full h-[300px] sm:h-[400px] rounded-xl overflow-hidden bg-muted flex items-center justify-center relative">
                     {selectedAttraction.imageUrls && selectedAttraction.imageUrls.length > 0 ? (

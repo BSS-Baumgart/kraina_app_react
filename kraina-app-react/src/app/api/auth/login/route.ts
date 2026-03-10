@@ -1,7 +1,26 @@
 import { supabase } from '@/lib/supabase'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
+    // Rate limit by IP — max 5 login attempts per 60 seconds
+    const forwarded = request.headers.get('x-forwarded-for')
+    const ip = forwarded?.split(',')[0]?.trim() || 'unknown'
+    const { allowed, remaining, resetTime } = rateLimit(`login:${ip}`, { limit: 5, windowSeconds: 60 })
+
+    if (!allowed) {
+      return Response.json(
+        { error: 'Zbyt wiele prób logowania. Spróbuj ponownie za chwilę.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((resetTime - Date.now()) / 1000)),
+            'X-RateLimit-Remaining': '0',
+          },
+        }
+      )
+    }
+
     const { email, password } = await request.json()
 
     if (!email || !password) {
@@ -19,7 +38,10 @@ export async function POST(request: Request) {
     if (error) {
       return Response.json(
         { error: error.message },
-        { status: 401 }
+        {
+          status: 401,
+          headers: { 'X-RateLimit-Remaining': String(remaining) },
+        }
       )
     }
 

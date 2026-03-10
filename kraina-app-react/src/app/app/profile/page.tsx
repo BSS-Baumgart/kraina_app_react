@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useAuthStore } from '@/store/auth.store'
+import { useRentals } from '@/hooks/useRentals'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User as UserIcon, Phone, MapPin, Mail, Shield, Wrench, Wallet } from 'lucide-react'
+import { User as UserIcon, Phone, MapPin, Mail, Shield, Wrench, Wallet, CheckCircle2, Minus } from 'lucide-react'
 import { useForm, Resolver } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -59,6 +59,7 @@ const customZodResolver = (schema: z.ZodSchema): Resolver<ProfileFormValues> => 
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore()
+  const { rentals } = useRentals()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -151,6 +152,33 @@ export default function ProfilePage() {
   const initials = user.fullName
     ? user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : 'KZ'
+
+  // Real assignment data from rentals
+  const myAssignments = useMemo(() => {
+    if (!user) return []
+    return rentals
+      .filter((r) =>
+        r.assignedEmployees?.some((a) => a.employeeId === user.id)
+      )
+      .map((r) => {
+        const assignment = r.assignedEmployees.find((a) => a.employeeId === user.id)!
+        return {
+          id: r.id,
+          date: r.date,
+          address: r.address,
+          didAssembly: assignment.didAssembly,
+          didDisassembly: assignment.didDisassembly,
+          attractionCount: r.attractionIds.length,
+          earnings: r.attractionIds.length * (
+            (assignment.didAssembly ? (assignment.assemblyRateSnapshot ?? 0) : 0) +
+            (assignment.didDisassembly ? (assignment.disassemblyRateSnapshot ?? 0) : 0)
+          ),
+        }
+      })
+      .sort((a, b) => b.date.localeCompare(a.date))
+  }, [rentals, user])
+
+  const totalEarnings = useMemo(() => myAssignments.reduce((sum, a) => sum + a.earnings, 0), [myAssignments])
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -369,60 +397,69 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Tabelka poglądowa (Mockup) */}
+          {/* Tabela realizacji */}
           <Card>
             <CardHeader className="py-4">
               <CardTitle className="text-lg">Ostatnie realizacje</CardTitle>
               <CardDescription>Twoja aktywność (montaże i demontaże)</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead>Data</TableHead>
-                      <TableHead>Lokalizacja</TableHead>
-                      <TableHead className="text-center w-24">Montaż</TableHead>
-                      <TableHead className="text-center w-24">Demontaż</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">10 Maj 2026</TableCell>
-                      <TableCell>Warszawa, ul. Wesoła 5</TableCell>
-                      <TableCell className="text-center text-green-600 bg-green-50/50">✅</TableCell>
-                      <TableCell className="text-center text-green-600 bg-green-50/50">✅</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">08 Maj 2026</TableCell>
-                      <TableCell>Kraków, Rynek Główny</TableCell>
-                      <TableCell className="text-center text-green-600 bg-green-50/50">✅</TableCell>
-                      <TableCell className="text-center text-muted-foreground">-</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">05 Maj 2026</TableCell>
-                      <TableCell>Gdańsk, Park Oliwski</TableCell>
-                      <TableCell className="text-center text-muted-foreground">-</TableCell>
-                      <TableCell className="text-center text-green-600 bg-green-50/50">✅</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">01 Maj 2026</TableCell>
-                      <TableCell>Poznań, Szkoła Podstawowa nr 3</TableCell>
-                      <TableCell className="text-center text-green-600 bg-green-50/50">✅</TableCell>
-                      <TableCell className="text-center text-green-600 bg-green-50/50">✅</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell className="font-medium">28 Kwi 2026</TableCell>
-                      <TableCell>Wrocław, Festyn Rodzinny</TableCell>
-                      <TableCell className="text-center text-green-600 bg-green-50/50">✅</TableCell>
-                      <TableCell className="text-center text-green-600 bg-green-50/50">✅</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-              <p className="text-xs text-center text-muted-foreground mt-4">
-                Pełna historia wyjazdów będzie dostępna po podpięciu modułu Terminarza i Statystyk.
-              </p>
+              {myAssignments.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Brak zapisanych realizacji. Zaznacz montaż lub demontaż w szczegółach rezerwacji.
+                </p>
+              ) : (
+                <>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-muted/50">
+                          <TableHead>Data</TableHead>
+                          <TableHead>Lokalizacja</TableHead>
+                          <TableHead className="text-center w-24">Montaż</TableHead>
+                          <TableHead className="text-center w-24">Demontaż</TableHead>
+                          <TableHead className="text-right w-28">Wypłata</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {myAssignments.slice(0, 10).map((a) => (
+                          <TableRow key={a.id}>
+                            <TableCell className="font-medium">
+                              {new Date(a.date + 'T00:00:00').toLocaleDateString('pl-PL', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </TableCell>
+                            <TableCell className="max-w-[200px] truncate">{a.address}</TableCell>
+                            <TableCell className="text-center">
+                              {a.didAssembly
+                                ? <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto" />
+                                : <Minus className="h-4 w-4 text-muted-foreground mx-auto" />}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {a.didDisassembly
+                                ? <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto" />
+                                : <Minus className="h-4 w-4 text-muted-foreground mx-auto" />}
+                            </TableCell>
+                            <TableCell className="text-right font-medium text-green-600">
+                              {a.earnings > 0 ? `${a.earnings.toFixed(2)} zł` : '—'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 px-1">
+                    <p className="text-xs text-muted-foreground">
+                      Montaż: {(user.assemblyRate ?? 0).toFixed(2)} zł · Demontaż: {(user.disassemblyRate ?? 0).toFixed(2)} zł × atrakcja
+                    </p>
+                    <div className="text-sm font-semibold">
+                      Suma: <span className="text-green-600">{totalEarnings.toFixed(2)} zł</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

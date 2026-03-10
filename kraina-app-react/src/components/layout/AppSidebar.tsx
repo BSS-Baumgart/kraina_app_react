@@ -8,6 +8,7 @@ import {
   ClipboardList,
   BarChart3,
   Users,
+  UserCheck,
   Settings,
   User,
   ChevronDown,
@@ -105,14 +106,14 @@ export function AppSidebar() {
         },
       ],
     },
+    {
+      label: 'Klienci',
+      href: '/app/clients',
+      icon: <UserCheck className="h-6 w-6" />,
+      key: 'clients',
+    },
     ...(user?.role === 'admin' || user?.role === 'owner'
       ? [
-          {
-            label: 'Pracownicy',
-            href: '/app/employees',
-            icon: <Users className="h-6 w-6" />,
-            key: 'employees',
-          },
           {
             label: 'Użytkownicy',
             href: '/app/users',
