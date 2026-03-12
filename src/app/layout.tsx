@@ -4,6 +4,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/react";
 import { APP_NAME } from "@/lib/constants";
 import "./globals.css";
 
@@ -46,6 +47,7 @@ export default function RootLayout({
           </TooltipProvider>
           <Toaster position="bottom-right" expand={true} />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
