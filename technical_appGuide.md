@@ -1,6 +1,5 @@
 # Kraina Zjeżdżalni — Technical App Guide
 
-> **Target audience:** React developer building a web version of this Android app.  
 > **App purpose:** Internal CRM / operations tool for a bouncy castle rental company. Used by employees and admins to manage rental bookings, track attractions, assign staff, and view schedules.
 
 ---
@@ -16,33 +15,42 @@
 7. [Screens / Pages](#7-screens--pages)
 8. [External Integrations](#8-external-integrations)
 9. [Role-Based Access Control](#9-role-based-access-control)
-10. [React Implementation Notes](#10-react-implementation-notes)
+10. [Implementation Details](#10-implementation-details)
 
 ---
 
 ## 1. Architecture Overview
 
 ```
-Flutter App (Android)
+Next.js 16 App (App Router + Turbopack)
 │
-├── main.dart                    # App entry, Supabase init, env loading
-├── providers/app_provider.dart  # Global state (ChangeNotifier / Provider)
-├── models/models.dart           # All data models
-├── services/
-│   ├── auth_service.dart        # Secure token storage (device keychain)
-│   ├── storage_service.dart     # Supabase Storage (image uploads)
-│   ├── distance_service.dart    # Google Distance Matrix API
-│   └── google_calendar_service.dart  # Google Calendar API (Service Account)
-├── screens/                     # Full-page views
-└── widgets/                     # Reusable UI components (sheets, cards)
+├── src/app/
+│   ├── layout.tsx                  # Root layout, AppProviders
+│   ├── page.tsx                    # Redirect → /login or /app
+│   ├── login/page.tsx              # Login page
+│   ├── api/                        # Route handlers (auth, users)
+│   └── app/                        # Protected app shell
+│       ├── layout.tsx              # Sidebar + TopHeader shell
+│       ├── dashboard/page.tsx      # KPI cards, charts, rental lists
+│       ├── rentals/page.tsx        # Rental management
+│       ├── calendar/page.tsx       # Calendar view
+│       ├── attractions/page.tsx    # Attraction CRUD
+│       ├── clients/page.tsx        # Client list
+│       ├── users/page.tsx          # User management
+│       ├── statistics/             # Stats, analytics, revenue, costs, payroll
+│       ├── profile/page.tsx        # User profile
+│       └── settings/page.tsx       # App settings
+├── src/components/                 # UI components by domain
+├── src/hooks/                      # React Query hooks (data fetching)
+├── src/store/                      # Zustand stores (client state)
+├── src/lib/                        # Constants, types, schemas, utilities
+└── src/providers/                  # AppProviders, QueryProvider
 ```
 
-**State management:** A single `AppProvider` (Provider package) holds all loaded data in memory and exposes methods that read/write to Supabase. On startup the provider:
-1. Refreshes the Supabase session
-2. Loads `currentUser` from the `users` table
-3. Loads all `attractions`, `users`, and `rentals` in parallel
-
-**React equivalent:** Use React Query or Zustand/Redux for global state. Load all three datasets on login and cache them client-side, refreshing on mutations.
+**State management:**
+- **Server state:** React Query (`@tanstack/react-query`) — caches Supabase data, handles mutations with optimistic updates and cache invalidation
+- **Client state:** Zustand stores — `auth.store` (user session), `settings.store` (user preferences), `filters.store` (page filters), `app.store` (global app state), `ui.store` (UI state)
+- **Form state:** react-hook-form with Zod validation via `createZodResolver<T>()` utility
 
 ---
 
@@ -386,57 +394,67 @@ Employee-specific stats:
 
 ## 7. Screens / Pages
 
-### `LandingScreen` → Route: `/`
-- Checks if user is already authenticated
-- If yes: navigates to main app shell
-- If no: shows `LoginScreen`
+### Landing → Route: `/`
+- Checks auth status, redirects to `/app/dashboard` or `/login`
 
-### `LoginScreen` → Route: `/login`
-- Email + password form
-- Calls `loginUser(email, password)` on submit
-- Shows loading state + error messages
+### Login → Route: `/login`
+- Email + password form with Zod validation
+- Calls Supabase Auth `signInWithPassword`
 
-### `MainShell` → Route: `/app`
-- Bottom navigation bar with 4 tabs:
-  1. **Terminarz** (Calendar/Schedule) — index 0
-  2. **Atrakcje** (Attractions) — index 1
-  3. **Statystyki** (Statistics) — index 2
-  4. **Profil** (Profile) — index 3
+### Reset Password → Route: `/reset-password`
+- Password reset flow via Supabase Auth
 
-### `CalendarScreen` (Terminarz) → Tab 0
-- **3 view modes** (user preference saved in SharedPreferences):
-  - **Miesiąc** (Month view): full month calendar with day-level rental count indicators; tapping a day shows that day's rentals below
-  - **Tydzień** (Week view): 7-day horizontal strip with prev/next navigation; shows rental counts per day; tapping a day shows rentals below
-  - **Lista** (Agenda view): chronological list split into "Nadchodzące" (upcoming) and "Historia" (past) tabs; days grouped with "Dziś"/"Jutro" labels
-- Tap any day → shows list of rentals for that day
-- Each rental entry shows: status badge, client name, address, setup/teardown times, attraction count
-- "+ add" button on each day → opens `QuickBookingSheet` with that date pre-filled
+### App Shell → Route: `/app`
+- Layout with collapsible sidebar (`AppSidebar`) + top header (`TopHeader`)
+- Breadcrumb navigation (`AppBreadcrumb`)
+- Protected — redirects unauthenticated users to `/login`
 
-### `AttractionsScreen` (Atrakcje) → Tab 1
-- Grid/list of all active attractions
-- Shows photo, name, dimensions, price
-- **Admin/Owner only:** Add new attraction button → opens form sheet
-- Tap attraction → detail view with all specs + photos
-- **Admin/Owner only:** Edit / deactivate (soft delete) actions
+### Dashboard → Route: `/app/dashboard`
+- Role-aware KPI cards (revenue, rentals count, top attraction, pending count)
+- Status pie chart, weekly revenue trend, top attractions bar chart
+- Today's rentals and upcoming rentals lists
+- Quick action buttons (new rental, calendar, attractions)
+- KPI month click → navigates to rentals with date filter params
 
-### `StatisticsScreen` (Statystyki) → Tab 2
-- Revenue charts (bar chart for last 6 months)
-- Rental counts (total, completed, pending)
-- Employee performance table (assemblies + disassemblies + earnings)
-- Date range filter for the report data
+### Rentals → Route: `/app/rentals`
+- Paginated table with status filtering and search
+- New/edit rental via 3-step dialog (`RentalForm`):
+  1. **Atrakcje** — date, setup/teardown time, attraction grid with availability check
+  2. **Klient** — client search/autocomplete, address, distance calculation
+  3. **Podsumowanie** — cost breakdown, custom price, notes
+- Detail dialog (`RentalDetailDialog`) with status transitions and employee assignments
 
-### `ProfileScreen` (Profil) → Tab 3
-- Shows current user's info: name, phone, role, address
-- Edit profile form
-- **Admin/Owner only:** User management (list all users, add/edit/deactivate users)
-- Logout button
-- Link to Privacy Policy
+### Calendar → Route: `/app/calendar`
+- `react-big-calendar` with month/week/day views
+- Color-coded events by rental status
+- Click event → rental detail
 
-### `HelpScreen`
-- Simple scrollable FAQ / help content
+### Attractions → Route: `/app/attractions`
+- Card grid of attractions with image, name, dimensions, price
+- Admin/Owner: add/edit via `AttractionForm` dialog
+- Soft delete (deactivation)
 
-### `PrivacyPolicyScreen`
-- Static text
+### Clients → Route: `/app/clients`
+- Searchable client list, auto-populated from rental history
+- Detail dialog with rental history
+
+### Users → Route: `/app/users` (admin/owner only)
+- User management table
+- Add/edit user via `UserForm` dialog (name, email, phone, role, rates)
+
+### Statistics → Route: `/app/statistics`
+- **Overview** (`/statistics`) — rental counts, status breakdown, trends
+- **Analytics** (`/statistics/analytics`) — detailed charts with CHART_COLORS_EXTENDED
+- **Revenue** (`/statistics/revenue`) — revenue by month/week/day with granularity selector
+- **Costs** (`/statistics/costs`) — expense tracking and categories
+- **Payroll** (`/statistics/payroll`) — employee earnings based on assembly/disassembly rates
+
+### Profile → Route: `/app/profile`
+- Edit own profile (name, phone, address)
+- Theme toggle (light/dark via next-themes)
+
+### Settings → Route: `/app/settings`
+- App-wide configuration
 
 ---
 
@@ -525,25 +543,33 @@ Company origin address is currently hardcoded as `"Warszawa, Polska"` — should
 
 ---
 
-## 10. React Implementation Notes
+## 10. Implementation Details
 
-### Recommended Stack
+### Tech Stack
 
-```
-Next.js 14+ (App Router)
-├── @supabase/supabase-js        — DB + Auth + Storage
-├── @tanstack/react-query        — Data fetching & caching
-├── zustand                      — Global client state
-├── shadcn/ui or MUI             — UI components
-├── react-big-calendar           — Calendar views
-├── recharts or Chart.js         — Statistics charts
-├── @googlemaps/js-api-loader    — Maps / distance matrix
-```
+| Package | Version | Purpose |
+|---------|---------|---------|
+| next | 16.1.6 | Framework (App Router + Turbopack) |
+| react | 19.2.4 | UI library |
+| @supabase/supabase-js | 2.99 | Database, Auth, Storage |
+| @supabase/ssr | 0.9 | Server-side Supabase client |
+| @tanstack/react-query | 5.90 | Server state management |
+| zustand | 5.0 | Client state management |
+| react-hook-form | 7.71 | Form management |
+| zod | 4.3 | Schema validation |
+| shadcn/ui + radix-ui | 1.4 | UI component library |
+| tailwindcss | 4 | Styling |
+| recharts | 2.15 | Charts (Area, Pie, Bar) |
+| react-big-calendar | 1.19 | Calendar views |
+| lucide-react | 0.577 | Icons |
+| date-fns | 4.1 | Date utilities |
+| next-themes | 0.4 | Dark/light theme |
+| sonner | 2.0 | Toast notifications |
 
-### Supabase client setup
+### Supabase Client Setup
 
 ```ts
-// lib/supabase.ts
+// src/lib/supabase.ts — browser client
 import { createBrowserClient } from '@supabase/ssr'
 
 export const supabase = createBrowserClient(
@@ -552,26 +578,72 @@ export const supabase = createBrowserClient(
 )
 ```
 
-### Loading data on login
+```ts
+// src/lib/supabase-server.ts — server client for Route Handlers
+import { createServerClient } from '@supabase/ssr'
+```
+
+### Data Fetching Pattern (React Query Hooks)
+
+All data access goes through custom hooks in `src/hooks/`:
 
 ```ts
-// Load all required data after successful auth
-async function loadAppData(userId: string) {
-  const [user, attractions, users, rentals] = await Promise.all([
-    supabase.from('users').select('*').eq('id', userId).single(),
-    supabase.from('attractions').select('*').order('name'),
-    supabase.from('users').select('*').order('first_name'),
-    supabase.from('rentals').select('*, employee_assignments(*)').order('date', { ascending: false }),
-  ])
-  return { user, attractions, users, rentals }
+// Example: useRentals.ts
+export function useRentals() {
+  return useQuery({
+    queryKey: ['rentals'],
+    queryFn: () => supabase.from('rentals')
+      .select('*, employee_assignments(*)')
+      .order('date', { ascending: false }),
+  })
 }
 ```
 
+Available hooks: `useRentals`, `useClients`, `useAttractions`, `useUsers`, `useAuth`, `useAvailability`, `useCostCalculation`, `useDistance`, `useExpenses`
+
+### Zustand Stores
+
+| Store | Purpose |
+|-------|---------|
+| `auth.store` | Current user session, role, `canManage` flag |
+| `settings.store` | User preferences (theme, language) |
+| `filters.store` | Active page filters (date range, status, search) |
+| `app.store` | Global app state |
+| `ui.store` | UI state (sidebar collapsed, modals) |
+
+### Form Validation
+
+Forms use Zod schemas with a generic resolver:
+
+```ts
+// src/lib/form-utils.ts
+export function createZodResolver<T>(schema: z.ZodSchema): Resolver<T> {
+  return async (values) => {
+    const result = schema.safeParse(values)
+    if (result.success) return { values: result.data, errors: {} }
+    // Map Zod issues to react-hook-form errors
+  }
+}
+```
+
+### Constants & Types
+
+All shared constants are centralized in `src/lib/constants.ts`:
+- `STATUS_DISPLAY`, `STATUS_COLORS` — rental status labels and colors
+- `BRAND_COLORS`, `GRADIENTS` — app theming
+- `CHART_COLORS`, `CHART_COLORS_EXTENDED` — chart palettes
+- `STATUS_OPTIONS`, `STATUS_ORDER` — filter options
+- `STATUS_TRANSITIONS` — valid status change map
+- `ATTRACTION_CATEGORIES` — category options
+- `ROLE_LABELS`, `ROLE_VARIANTS` — user role display
+- `MONTH_NAMES_SHORT`, `GRANULARITY_LABELS` — time-related labels
+
+TypeScript types in `src/lib/types.ts`: `User`, `Rental`, `Client`, `Attraction`, `Expense`, `Assignment`, `UserRole`, `RentalStatus`, `PaymentType`, `Granularity`
+
 ### Mapping Supabase snake_case → camelCase
 
-Supabase returns `snake_case` keys. Either use a transform layer or configure Supabase client:
+Supabase returns `snake_case` keys. Mapping is done in hooks/services:
 ```ts
-// Option A: use supabase schema transform (manual mapping)
 const mapUser = (row: any): User => ({
   id: row.id,
   firstName: row.first_name,
@@ -581,119 +653,31 @@ const mapUser = (row: any): User => ({
   isActive: row.is_active,
   ...
 })
-
-// Option B: use Supabase JS v2 with TypeScript types generated via CLI
-// supabase gen types typescript --project-id YOUR_PROJECT_ID > types/supabase.ts
 ```
 
-### File uploads
+### Environment Variables
 
-```ts
-// Upload attraction image
-const { data, error } = await supabase.storage
-  .from('attractions')
-  .upload(`${attractionId}/${crypto.randomUUID()}.jpg`, file, {
-    contentType: file.type,
-  })
+Validated at startup via Zod schema in `src/lib/env.ts`:
 
-const publicUrl = supabase.storage
-  .from('attractions')
-  .getPublicUrl(data!.path).data.publicUrl
-```
-
-### Availability check (client-side)
-
-```ts
-function timeToMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number)
-  return h * 60 + m
-}
-
-function overlaps(
-  aSetup: string, aTeardown: string,
-  bSetup: string, bTeardown: string
-): boolean {
-  return timeToMinutes(aSetup) < timeToMinutes(bTeardown) &&
-         timeToMinutes(bSetup) < timeToMinutes(aTeardown)
-}
-
-function getAvailableAttractions(
-  attractions: Attraction[],
-  rentals: Rental[],
-  date: string,
-  setupTime: string,
-  teardownTime: string,
-  excludeRentalId?: string
-): Attraction[] {
-  const bookedIds = new Set(
-    rentals
-      .filter(r => r.date === date && r.status !== 'cancelled')
-      .filter(r => r.id !== excludeRentalId)
-      .filter(r => overlaps(r.setupTime, r.teardownTime, setupTime, teardownTime))
-      .flatMap(r => r.attractionIds)
-  )
-  return attractions.filter(a => a.isActive && !bookedIds.has(a.id))
-}
-```
-
-### New rental flow (booking wizard)
-
-The booking wizard has **3 steps**:
-1. **Atrakcje** — select date, setup time, teardown time, pick attractions (filtered by availability)
-2. **Klient** — enter client name, phone, delivery address (with distance calculation)
-3. **Podsumowanie** — review all details, assign employee, set custom price, add notes, confirm
-
-### Google Calendar (server-side only)
-
-Calendar sync must run on the server (Next.js Route Handler or API route) because the service account JSON key cannot be in browser code.
-
-```ts
-// app/api/calendar/route.ts (Next.js)
-import { google } from 'googleapis'
-
-const auth = new google.auth.GoogleAuth({
-  credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON!),
-  scopes: ['https://www.googleapis.com/auth/calendar'],
-})
-
-export async function POST(req: Request) {
-  const { rental, attractions, employeeName } = await req.json()
-  const calendar = google.calendar({ version: 'v3', auth: await auth.getClient() })
-  // create/update/delete event...
-}
-```
+| Variable | Required | Default |
+|----------|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | — |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | — |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | No | — |
+| `NEXT_PUBLIC_COMPANY_ADDRESS` | No | `Warszawa, Polska` |
+| `NEXT_PUBLIC_APP_NAME` | No | `Kraina Zjeżdżalni` |
 
 ### Brand Colors
 
 ```ts
-// From AppTheme
-const colors = {
-  primary:    '#3b86c6',  // Blue
-  secondary:  '#ebcc7c',  // Golden
-  accent:     '#d98481',  // Coral/Pink
-  surface:    '#FDF9F0',  // Warm white
-  textPrimary:'#1A2744',  // Dark navy
-  border:     '#E8DFC4',  // Warm beige
-  chipBg:     '#FDF3D8',  // Warm golden tint
-}
-
-const gradients = {
-  primary:    'linear-gradient(135deg, #2a75bb, #3b86c6)',
-  accent:     'linear-gradient(135deg, #d98481, #ebcc7c)',
-  gold:       'linear-gradient(135deg, #f0d68a, #ebcc7c)',
-  background: 'linear-gradient(180deg, #FDF9F0, #e8f3fb)',
-}
-```
-
-### Status badge colors
-
-```ts
-const statusColors: Record<RentalStatus, string> = {
-  pending:    '#FBBF24',
-  confirmed:  '#22C55E',
-  inProgress: '#3B82F6',
-  completed:  '#6366F1',
-  cancelled:  '#EF4444',
+const BRAND_COLORS = {
+  primary:   '#3b86c6',
+  secondary: '#ebcc7c',
+  accent:    '#d98481',
+  surface:   '#FDF9F0',
+  text:      '#1A2744',
+  border:    '#E8DFC4',
+  chip:      '#FDF3D8',
 }
 ```
 

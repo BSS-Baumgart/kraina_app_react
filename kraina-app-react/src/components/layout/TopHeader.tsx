@@ -34,7 +34,6 @@ export function TopHeader() {
   return (
     <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-sm border-b border-border">
       <div className="px-5 h-16 flex items-center justify-between gap-4">
-        {/* Left: trigger + page title */}
         <div className="flex items-center gap-4 min-w-0">
           <SidebarTrigger className="h-10 w-10 [&>svg]:size-6" />
           <div className="flex flex-col min-w-0">
@@ -42,7 +41,6 @@ export function TopHeader() {
           </div>
         </div>
 
-        {/* Right: mode toggle + user */}
         <div className="flex items-center gap-3 shrink-0">
           <ModeToggle className="h-10 w-10" />
           <div className="hidden sm:flex flex-col text-right mr-2">

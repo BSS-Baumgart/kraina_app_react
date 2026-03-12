@@ -21,7 +21,6 @@ export async function POST(
 
     const supabase = createServiceClient()
 
-    // Fetch user email from users table
     const { data: user, error: fetchError } = await supabase
       .from('users')
       .select('email')
@@ -42,7 +41,6 @@ export async function POST(
     const redirectTo = `${origin}/reset-password`
 
     if (sendEmail) {
-      // Send password reset email via Supabase
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo,
       })
@@ -54,7 +52,6 @@ export async function POST(
       return Response.json({ sent: true }, { status: 200 })
     }
 
-    // Generate a one-time recovery link using Supabase Admin API
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email: user.email,

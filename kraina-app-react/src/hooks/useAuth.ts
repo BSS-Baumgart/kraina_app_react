@@ -10,7 +10,6 @@ export function useAuth() {
     useAuthStore()
   const { setCurrentUser } = useAppStore()
 
-  // Initialize auth on mount
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -24,7 +23,6 @@ export function useAuth() {
           })
           setIsAuthenticated(true)
 
-          // Fetch user profile from users table
           const { data: userProfile, error } = await supabase
             .from('users')
             .select('*')

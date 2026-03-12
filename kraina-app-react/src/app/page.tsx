@@ -17,10 +17,8 @@ export default function LandingPage() {
         } = await supabase.auth.getSession()
 
         if (session?.user) {
-          // User is authenticated, redirect to calendar
-          router.push('/app/calendar')
+          router.push('/app/dashboard')
         } else {
-          // User is not authenticated, redirect to login
           router.push('/login')
         }
       } catch (error) {
@@ -34,7 +32,6 @@ export default function LandingPage() {
     checkAuth()
   }, [router])
 
-  // Show loading spinner while checking auth
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-muted to-secondary">
       <div className="text-center">

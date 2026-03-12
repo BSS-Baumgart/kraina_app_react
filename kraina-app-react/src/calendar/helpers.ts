@@ -20,12 +20,9 @@ import {
   endOfYear,
   startOfYear,
 } from 'date-fns'
-import { pl } from 'date-fns/locale'
 
 import type { ICalendarCell, IRentalEvent } from '@/calendar/interfaces'
 import type { TCalendarView, TVisibleHours, TWorkingHours } from '@/calendar/types'
-
-// ================ Header helper functions ================ //
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
@@ -96,8 +93,6 @@ export function getEventsCount(
     return compareFn(eventDate, date)
   }).length
 }
-
-// ================ Week and day view helper functions ================ //
 
 export function getCurrentEvents(events: IRentalEvent[]) {
   const now = new Date()
@@ -202,8 +197,6 @@ export function getVisibleHours(
   return { hours, earliestEventHour, latestEventHour }
 }
 
-// ================ Month view helper functions ================ //
-
 export function getCalendarCells(selectedDate: Date): ICalendarCell[] {
   const currentYear = selectedDate.getFullYear()
   const currentMonth = selectedDate.getMonth()
@@ -257,7 +250,6 @@ export function calculateMonthEventPositions(
   const eventPositions: { [key: string]: number } = {}
   const occupiedPositions: { [key: string]: boolean[] } = {}
 
-  // Generate all days in month
   const currentDate = new Date(monthStart)
   while (currentDate <= monthEnd) {
     occupiedPositions[currentDate.toISOString()] = [false, false, false]
@@ -289,7 +281,6 @@ export function calculateMonthEventPositions(
     const eventStart = new Date(event.startDate)
     const eventEnd = new Date(event.endDate)
     
-    // Generate event days
     const eventDays: Date[] = []
     const current = new Date(eventStart < monthStart ? monthStart : eventStart)
     const end = eventEnd > monthEnd ? monthEnd : eventEnd

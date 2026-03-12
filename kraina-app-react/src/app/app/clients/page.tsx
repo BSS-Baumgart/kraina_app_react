@@ -19,15 +19,15 @@ import {
 import {
   Search,
   Phone,
-  MapPin,
   Users,
   DollarSign,
   ClipboardList,
   TrendingUp,
 } from 'lucide-react'
-import { Client } from '@/lib/types'
+import { Client, Rental } from '@/lib/types'
 import { formatPrice } from '@/lib/utils'
 import { ClientDetailDialog } from '@/components/clients/ClientDetailDialog'
+import { RentalDetailDialog } from '@/components/rentals/RentalDetailDialog'
 
 export default function ClientsPage() {
   const { clients, isLoading, error } = useClients()
@@ -36,8 +36,8 @@ export default function ClientsPage() {
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
+  const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
 
-  // Pre-compute per-client stats
   const clientStats = useMemo(() => {
     const map = new Map<string, { rentalCount: number; completedCount: number; totalRevenue: number; lastDate: string | null }>()
 
@@ -93,7 +93,6 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-500">
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
@@ -141,7 +140,6 @@ export default function ClientsPage() {
         </Card>
       </div>
 
-      {/* Search */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -154,7 +152,6 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {/* Table */}
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -225,13 +222,21 @@ export default function ClientsPage() {
         </Card>
       )}
 
-      {/* Detail dialog */}
       <ClientDetailDialog
         client={selectedClient}
         rentals={rentals}
         attractions={attractions}
         open={!!selectedClient}
         onClose={() => setSelectedClient(null)}
+        onRentalClick={(rental) => {
+          setSelectedClient(null)
+          setSelectedRental(rental)
+        }}
+      />
+
+      <RentalDetailDialog
+        rental={selectedRental}
+        onClose={() => setSelectedRental(null)}
       />
     </div>
   )

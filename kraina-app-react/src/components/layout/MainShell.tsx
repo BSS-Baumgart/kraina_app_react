@@ -5,6 +5,7 @@ import { AppSidebar } from './AppSidebar'
 import { TopHeader } from './TopHeader'
 import { AppBreadcrumb } from './AppBreadcrumb'
 import { useAuth } from '@/hooks/useAuth'
+import { useInactivityLogout } from '@/hooks/useInactivityLogout'
 import {
   SidebarProvider,
   SidebarInset,
@@ -15,14 +16,13 @@ interface MainShellProps {
 }
 
 export function MainShell({ children }: MainShellProps) {
-  const { isLoading, isAuthenticated } = useAuth() // Wywołanie hooka tutaj wymusza inicjalizację stanu autoryzacji przy każdym załadowaniu aplikacji!
+  const { isLoading, isAuthenticated } = useAuth()
+  useInactivityLogout() // Wywołanie hooka tutaj wymusza inicjalizację stanu autoryzacji przy każdym załadowaniu aplikacji!
 
-  // Przerywamy renderowanie Sidebar zanim załaduje się user i rola
   if (isLoading || (!isAuthenticated && typeof window !== 'undefined')) {
     return (
       <div className="flex h-svh w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-           {/* You can add your app logo here */}
            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent shadow-md"></div>
            <p className="text-sm text-muted-foreground animate-pulse">Ładowanie aplikacji...</p>
         </div>

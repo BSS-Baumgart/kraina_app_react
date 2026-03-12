@@ -1,6 +1,7 @@
 export type PageMeta = { title: string; description: string }
 
 export const pageMeta: Record<string, PageMeta> = {
+  '/app/dashboard':              { title: '🏠 Dashboard',           description: 'Przegląd Twojej działalności i szybki dostęp do kluczowych danych.' },
   '/app/calendar':               { title: '📅 Terminarz',          description: 'Przeglądaj i zarządzaj rezerwacjami w widoku kalendarza.' },
   '/app/attractions':            { title: '⚡ Atrakcje',            description: 'Przeglądaj i zarządzaj dostępnymi atrakcjami.' },
   '/app/attractions/new':        { title: '➕ Dodaj nową atrakcję', description: 'Stwórz nową atrakcję w systemie.' },
@@ -8,6 +9,7 @@ export const pageMeta: Record<string, PageMeta> = {
   '/app/statistics':             { title: '📊 Statystyki',          description: 'Analizuj dane i raporty biznesowe.' },
   '/app/statistics/revenue':     { title: '💰 Przychody',           description: 'Analiza przychodów i trendów przychodowych.' },
   '/app/statistics/performance': { title: '⚡ Performance',         description: 'Wydajność i metryki operacyjne.' },
+  '/app/statistics/payroll':     { title: '💰 Wypłaty',              description: 'Przegląd zarobków i wypłat pracowników.' },
   '/app/statistics/costs':       { title: '💸 Analiza kosztów',     description: 'Szczegółowa analiza kosztów i marż zysku.' },
   '/app/clients':                { title: '👤 Klienci',              description: 'Przeglądaj klientów i ich historię rezerwacji.' },
   '/app/users':                  { title: '👥 Użytkownicy',         description: 'Zarządzaj użytkownikami i ich uprawnieniami.' },

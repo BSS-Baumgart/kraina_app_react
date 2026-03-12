@@ -1,5 +1,7 @@
 export type UserRole = 'employee' | 'admin' | 'owner'
 export type RentalStatus = 'pending' | 'confirmed' | 'inProgress' | 'completed' | 'cancelled'
+export type PaymentType = 'cash' | 'blik' | 'transfer'
+export type Granularity = 'day' | 'week' | 'month'
 
 export interface User {
   id: string
@@ -14,7 +16,6 @@ export interface User {
   assemblyRate: number
   disassemblyRate: number
   createdAt: string
-  // computed
   fullName?: string
   initials?: string
 }
@@ -33,7 +34,6 @@ export interface Attraction {
   isActive: boolean
   createdAt: string
   createdBy?: string
-  // computed
   dimensions?: string
   formattedPrice?: string
   primaryImageUrl?: string
@@ -78,13 +78,15 @@ export interface Rental {
   status: RentalStatus
   notes?: string
   contractPhotoUrl?: string
+  paymentType?: PaymentType
+  hasInvoice?: boolean
+  hasReceipt?: boolean
   createdById: string
   createdAt: string
   updatedAt?: string
   assemblyRecords?: AssemblyRecord[]
   disassemblyRecords?: AssemblyRecord[]
   calendarEventId?: string
-  // computed
   totalCost?: number
   hasContract?: boolean
 }
@@ -117,6 +119,18 @@ export interface LoadingState {
   attractions: boolean
   rentals: boolean
   currentUser: boolean
+}
+
+export type ExpenseCategory = 'fuel' | 'food' | 'repair' | 'material' | 'attraction_repair' | 'other'
+
+export interface Expense {
+  id: string
+  date: string
+  category: ExpenseCategory
+  description: string
+  amount: number
+  createdBy: string
+  createdAt: string
 }
 
 export interface AppError {

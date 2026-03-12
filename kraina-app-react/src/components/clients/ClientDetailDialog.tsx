@@ -31,7 +31,6 @@ import {
   FileText,
   Calendar,
   TrendingUp,
-  DollarSign,
   ClipboardList,
   X,
   Star,
@@ -48,6 +47,7 @@ interface ClientDetailDialogProps {
   open: boolean
   onClose: () => void
   onClientUpdated?: () => void
+  onRentalClick?: (rental: Rental) => void
 }
 
 export function ClientDetailDialog({
@@ -57,6 +57,7 @@ export function ClientDetailDialog({
   open,
   onClose,
   onClientUpdated,
+  onRentalClick,
 }: ClientDetailDialogProps) {
   const updateClient = useUpdateClient()
   const [isEditing, setIsEditing] = useState(false)
@@ -102,7 +103,6 @@ export function ClientDetailDialog({
       .reduce((sum, r) => sum + (r.totalCost ?? 0), 0)
     const avgOrderValue = completed > 0 ? completedRevenue / completed : 0
 
-    // Most rented attractions
     const attractionCounts: Record<string, number> = {}
     for (const r of clientRentals) {
       for (const id of r.attractionIds) {
@@ -117,7 +117,6 @@ export function ClientDetailDialog({
         count,
       }))
 
-    // First and last rental dates
     const dates = clientRentals.map((r) => r.date).sort()
     const firstRental = dates[0] ?? null
     const lastRental = dates[dates.length - 1] ?? null
@@ -136,12 +135,11 @@ export function ClientDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col p-0 top-[10vh] translate-y-0">
+      <DialogContent showCloseButton={false} className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col p-0 top-[10vh] translate-y-0">
         <DialogHeader className="sr-only">
           <DialogTitle>{client.name}</DialogTitle>
         </DialogHeader>
 
-        {/* Header — always visible */}
         <div className="shrink-0 bg-card border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -173,7 +171,6 @@ export function ClientDetailDialog({
           </div>
         </div>
 
-        {/* Tabs */}
         <Tabs defaultValue="overview" className="flex flex-col min-h-0 flex-1">
           <div className="shrink-0 px-6 pt-4 pb-0">
             <TabsList className="mb-0">
@@ -193,9 +190,7 @@ export function ClientDetailDialog({
           </div>
           <div className="flex-1 overflow-y-auto px-6 py-4">
 
-            {/* Tab: Podsumowanie */}
             <TabsContent value="overview" className="space-y-5">
-              {/* Stat cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="rounded-lg border p-3 text-center">
                   <p className="text-2xl font-bold">{stats.total}</p>
@@ -215,9 +210,7 @@ export function ClientDetailDialog({
                 </div>
               </div>
 
-              {/* Additional details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                {/* Timeline */}
                 <div className="rounded-lg border p-4 space-y-2">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
@@ -243,7 +236,6 @@ export function ClientDetailDialog({
                   </div>
                 </div>
 
-                {/* Top attractions */}
                 <div className="rounded-lg border p-4 space-y-2">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
                     <Star className="h-4 w-4" />
@@ -265,7 +257,6 @@ export function ClientDetailDialog({
               </div>
             </TabsContent>
 
-            {/* Tab: Rezerwacje */}
             <TabsContent value="rentals">
               {clientRentals.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">Brak rezerwacji dla tego klienta.</p>
@@ -283,7 +274,11 @@ export function ClientDetailDialog({
                     </TableHeader>
                     <TableBody>
                       {clientRentals.map((r) => (
-                        <TableRow key={r.id}>
+                        <TableRow
+                          key={r.id}
+                          className={onRentalClick ? 'cursor-pointer hover:bg-muted/50' : ''}
+                          onClick={() => onRentalClick?.(r)}
+                        >
                           <TableCell className="font-medium">{formatDate(r.date)}</TableCell>
                           <TableCell className="text-muted-foreground">{r.setupTime} – {r.teardownTime}</TableCell>
                           <TableCell>
@@ -322,7 +317,6 @@ export function ClientDetailDialog({
               )}
             </TabsContent>
 
-            {/* Tab: Dane */}
             <TabsContent value="info" className="space-y-4">
               {!isEditing ? (
                 <div className="space-y-4">

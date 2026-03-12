@@ -4,11 +4,8 @@ import { usePathname } from 'next/navigation'
 import { getPageMeta } from '@/lib/page-meta'
 
 interface PageHeaderProps {
-  /** Override title from page-meta map */
   title?: string
-  /** Override description from page-meta map */
   description?: string
-  /** Extra content aligned to the right (e.g. action buttons) */
   actions?: React.ReactNode
 }
 

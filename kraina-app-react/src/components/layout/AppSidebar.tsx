@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useRouter, usePathname } from "next/navigation"
 import {
+  LayoutDashboard,
   Calendar,
   Zap,
   ClipboardList,
@@ -22,7 +23,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -43,7 +43,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 export type NavItem = {
@@ -61,6 +60,12 @@ export function AppSidebar() {
   const { user, logout } = useAuthStore()
 
   const navItems: NavItem[] = [
+    {
+      label: 'Dashboard',
+      href: '/app/dashboard',
+      icon: <LayoutDashboard className="h-6 w-6" />,
+      key: 'dashboard',
+    },
     {
       label: 'Terminarz',
       href: '/app/calendar',
@@ -86,23 +91,36 @@ export function AppSidebar() {
       key: 'statistics',
       children: [
         {
+          label: 'Przegląd',
+          href: '/app/statistics',
+          icon: null,
+          key: 'stats-overview',
+        },
+        {
           label: 'Przychody',
           href: '/app/statistics/revenue',
           icon: null,
           key: 'stats-revenue',
+          requiredRole: 'admin',
         },
         {
-          label: 'Performance',
-          href: '/app/statistics/performance',
+          label: 'Wypłaty',
+          href: '/app/statistics/payroll',
           icon: null,
-          key: 'stats-performance',
+          key: 'stats-payroll',
         },
         {
-          label: 'Analiza kosztów',
+          label: 'Analityka',
+          href: '/app/statistics/analytics',
+          icon: null,
+          key: 'stats-analytics',
+        },
+        {
+          label: 'Koszty',
           href: '/app/statistics/costs',
           icon: null,
           key: 'stats-costs',
-          requiredRole: 'owner',
+          requiredRole: 'admin',
         },
       ],
     },
@@ -112,7 +130,7 @@ export function AppSidebar() {
       icon: <UserCheck className="h-6 w-6" />,
       key: 'clients',
     },
-    ...(user?.role === 'admin' || user?.role === 'owner'
+    ...(user?.role === 'owner'
       ? [
           {
             label: 'Użytkownicy',
@@ -145,7 +163,6 @@ export function AppSidebar() {
     if (pathname === item.href) {
       return true
     }
-    // Check if any child is active
     if (item.children) {
       return item.children.some(child => pathname === child.href)
     }
@@ -156,7 +173,6 @@ export function AppSidebar() {
     return pathname === href
   }
 
-  // Auto expand items if child is active
   const getDefaultOpen = (item: NavItem) => {
     if (item.children) {
       return item.children.some(child => pathname === child.href)
@@ -164,9 +180,28 @@ export function AppSidebar() {
     return false
   }
 
+  const getRoleLabel = (role?: string) => {
+    switch (role) {
+      case 'owner': return 'Właściciel'
+      case 'admin': return 'Administrator'
+      case 'employee': return 'Pracownik'
+      default: return 'Pracownik'
+    }
+  }
+
   const getUserInitials = () => {
+    if (user?.initials) return user.initials
+    if (user?.firstName && user?.lastName) {
+      return (user.firstName[0] + user.lastName[0]).toUpperCase()
+    }
     if (!user?.email) return 'U'
     return user.email.substring(0, 2).toUpperCase()
+  }
+
+  const getUserDisplayName = () => {
+    if (user?.fullName) return user.fullName
+    if (user?.firstName && user?.lastName) return `${user.firstName} ${user.lastName}`
+    return user?.email?.split('@')[0] || 'Użytkownik'
   }
 
   return (
@@ -276,10 +311,10 @@ export function AppSidebar() {
                   </Avatar>
                   <div className="grid flex-1 text-left leading-tight ml-1">
                     <span className="truncate text-base font-bold">
-                      {user?.email?.split('@')[0] || 'User'}
+                      {getUserDisplayName()}
                     </span>
                     <span className="truncate text-sm text-muted-foreground">
-                      {user?.role || 'employee'}
+                      {getRoleLabel(user?.role)}
                     </span>
                   </div>
                   <ChevronDown className="ml-auto h-5 w-5 shrink-0" />

@@ -33,8 +33,14 @@ export const rentalFormSchema = z.object({
   setupTime: z.string().min(1, 'Godzina montażu jest wymagana'),
   teardownTime: z.string().min(1, 'Godzina demontażu jest wymagana'),
   clientName: z.string().min(2, 'Imię klienta musi mieć co najmniej 2 znaki').max(100, 'Imię klienta jest za długie'),
-  clientPhone: z.string().min(7, 'Numer telefonu jest za krótki').max(20, 'Numer telefonu jest za długi'),
-  address: z.string().min(3, 'Adres jest za krótki').max(200, 'Adres jest za długi'),
+  clientPhone: z.string()
+    .min(7, 'Numer telefonu jest za krótki')
+    .max(20, 'Numer telefonu jest za długi')
+    .regex(/^[+\d\s()-]+$/, 'Numer telefonu zawiera niedozwolone znaki'),
+  street: z.string().min(2, 'Ulica jest za krótka').max(100, 'Ulica jest za długa'),
+  houseNumber: z.string().min(1, 'Numer domu jest wymagany').max(20, 'Numer domu jest za długi'),
+  postalCode: z.string().regex(/^\d{2}-\d{3}$/, 'Kod pocztowy musi mieć format XX-XXX'),
+  city: z.string().min(2, 'Miejscowość jest za krótka').max(100, 'Miejscowość jest za długa'),
   attractionIds: z.array(z.string()).min(1, 'Wybierz co najmniej jedną atrakcję'),
   customPrice: z.union([z.literal(''), z.coerce.number().min(0, 'Cena nie może być ujemna')]).optional(),
   distanceKm: z.union([z.literal(''), z.coerce.number().min(0, 'Dystans nie może być ujemny')]).optional(),

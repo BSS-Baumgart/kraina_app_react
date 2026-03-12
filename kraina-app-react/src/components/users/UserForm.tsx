@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useForm, type Resolver } from 'react-hook-form'
-import * as z from 'zod'
+import { useForm } from 'react-hook-form'
 import { User } from '@/lib/types'
+import { ROLE_LABELS } from '@/lib/constants'
+import { createZodResolver } from '@/lib/form-utils'
 import {
   userFormSchema,
   createUserFormSchema,
-  type UserFormInput,
   type CreateUserFormInput,
 } from '@/lib/schemas'
 import {
@@ -38,29 +38,6 @@ import { useUpdateUser, useCreateUser } from '@/hooks/useUsers'
 import { AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
-const ROLE_LABELS: Record<string, string> = {
-  employee: 'Pracownik',
-  admin: 'Administrator',
-  owner: 'Właściciel',
-}
-
-function customZodResolver(schema: z.ZodSchema): Resolver<CreateUserFormInput> {
-  return async (values) => {
-    const result = await schema.safeParseAsync(values)
-    if (result.success) {
-      return { values: result.data, errors: {} } as any
-    }
-    const errors: Record<string, any> = {}
-    result.error.issues.forEach((issue) => {
-      const path = issue.path[0] as string
-      if (path && !errors[path]) {
-        errors[path] = { type: issue.code as any, message: issue.message }
-      }
-    })
-    return { values: {} as any, errors }
-  }
-}
-
 type UserFormProps =
   | { mode?: 'edit'; employee: User; onSuccess?: () => void; onCancel?: () => void }
   | { mode: 'create'; employee?: never; onSuccess?: () => void; onCancel?: () => void }
@@ -74,7 +51,7 @@ export function UserForm(props: UserFormProps) {
   const createMutation = useCreateUser()
 
   const form = useForm<CreateUserFormInput>({
-    resolver: customZodResolver(
+    resolver: createZodResolver<CreateUserFormInput>(
       isCreating ? createUserFormSchema : userFormSchema
     ),
     defaultValues: employee

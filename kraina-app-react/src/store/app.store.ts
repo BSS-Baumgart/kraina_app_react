@@ -9,7 +9,6 @@ interface AppState {
   loading: LoadingState
   error: string | null
 
-  // setters
   setUsers: (users: User[]) => void
   setRentals: (rentals: Rental[]) => void
   setAttractions: (attractions: Attraction[]) => void
@@ -17,7 +16,6 @@ interface AppState {
   setLoading: (loading: Partial<LoadingState>) => void
   setError: (error: string | null) => void
 
-  // data refresh
   isRefreshing: boolean
   setIsRefreshing: (value: boolean) => void
 }

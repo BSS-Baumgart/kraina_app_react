@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Globe, Clock, Shield, LifeBuoy, Bell, Save, Moon, Sun, Monitor, Truck, Building2, MapPin } from "lucide-react"
-import { useSettingsStore } from "@/store/settings.store"
+import { useSettingsStore, getFullCompanyAddress } from "@/store/settings.store"
 import { toast } from "sonner"
 
 export default function SettingsPage() {
@@ -18,7 +18,10 @@ export default function SettingsPage() {
   const { transport, company, setTransportSettings, setCompanySettings } = useSettingsStore()
   const [pricePerKm, setPricePerKm] = useState(String(transport.pricePerKm))
   const [freeKmThreshold, setFreeKmThreshold] = useState(String(transport.freeKmThreshold))
-  const [companyAddress, setCompanyAddress] = useState(company.address)
+  const [companyStreet, setCompanyStreet] = useState(company.street)
+  const [companyHouseNumber, setCompanyHouseNumber] = useState(company.houseNumber)
+  const [companyPostalCode, setCompanyPostalCode] = useState(company.postalCode)
+  const [companyCity, setCompanyCity] = useState(company.city)
 
   return (
     <div className="space-y-6">
@@ -57,7 +60,6 @@ export default function SettingsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* OGÓLNE USTAWIENIA */}
         <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
@@ -134,7 +136,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* FIRMA */}
         <TabsContent value="company" className="space-y-4">
           <Card>
             <CardHeader>
@@ -145,32 +146,64 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
-                <div className="grid gap-2">
-                  <Label className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    Adres firmy
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Pełny adres z kodem pocztowym i miastem, np. ul. Przykładowa 10, 00-000 Warszawa.
-                  </p>
-                  <Input
-                    className="w-full max-w-md"
-                    placeholder="ul. Przykładowa 10, 00-000 Warszawa"
-                    value={companyAddress}
-                    onChange={(e) => setCompanyAddress(e.target.value)}
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+                  <div className="grid gap-2">
+                    <Label className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      Ulica
+                    </Label>
+                    <Input
+                      placeholder="ul. Przykładowa"
+                      value={companyStreet}
+                      onChange={(e) => setCompanyStreet(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Numer domu</Label>
+                    <Input
+                      placeholder="10"
+                      value={companyHouseNumber}
+                      onChange={(e) => setCompanyHouseNumber(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Kod pocztowy</Label>
+                    <Input
+                      placeholder="00-000"
+                      value={companyPostalCode}
+                      onChange={(e) => setCompanyPostalCode(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Miejscowość</Label>
+                    <Input
+                      placeholder="Warszawa"
+                      value={companyCity}
+                      onChange={(e) => setCompanyCity(e.target.value)}
+                    />
+                  </div>
                 </div>
+                {getFullCompanyAddress({ street: companyStreet, houseNumber: companyHouseNumber, postalCode: companyPostalCode, city: companyCity }) && (
+                  <div className="rounded-lg border bg-muted/50 p-3 text-sm max-w-lg">
+                    <span className="text-muted-foreground">Podgląd: </span>
+                    <span className="font-medium">{getFullCompanyAddress({ street: companyStreet, houseNumber: companyHouseNumber, postalCode: companyPostalCode, city: companyCity })}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end border-t pt-6">
                 <Button
                   onClick={() => {
-                    const trimmed = companyAddress.trim()
-                    if (!trimmed) {
-                      toast.error('Podaj adres firmy')
+                    if (!companyStreet.trim() || !companyHouseNumber.trim() || !companyCity.trim()) {
+                      toast.error('Uzupełnij ulicę, numer domu i miejscowość')
                       return
                     }
-                    setCompanySettings({ address: trimmed })
+                    setCompanySettings({
+                      street: companyStreet.trim(),
+                      houseNumber: companyHouseNumber.trim(),
+                      postalCode: companyPostalCode.trim(),
+                      city: companyCity.trim(),
+                    })
                     toast.success('Adres firmy został zapisany')
                   }}
                 >
@@ -182,7 +215,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* TRANSPORT */}
         <TabsContent value="transport" className="space-y-4">
           <Card>
             <CardHeader>
@@ -269,7 +301,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* POWIADOMIENIA */}
         <TabsContent value="notifications" className="space-y-4">
           <Card>
             <CardHeader>
@@ -301,7 +332,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* PRYWATNOŚĆ I BEZPIECZEŃSTWO */}
         <TabsContent value="privacy" className="space-y-4">
           <Card>
             <CardHeader>
@@ -336,7 +366,6 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* POMOC */}
         <TabsContent value="help" className="space-y-4">
           <Card>
             <CardHeader>

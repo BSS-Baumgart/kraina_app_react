@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 
-export async function POST(request: Request) {
+export async function POST(_request: Request) {
   try {
     const { error } = await supabase.auth.signOut()
 

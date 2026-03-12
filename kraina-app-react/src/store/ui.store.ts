@@ -7,7 +7,6 @@ interface UIState {
   mobileMenuOpen: boolean
   selectedRentalId: string | null
 
-  // setters
   setSelectedDate: (date: Date) => void
   setCalendarView: (view: 'day' | 'week' | 'month' | 'year' | 'agenda') => void
   setSidebarOpen: (open: boolean) => void

@@ -1,18 +1,25 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { Calendar, Views, dateFnsLocalizer, Messages } from 'react-big-calendar'
+import { useMemo, useState, useCallback } from 'react'
+import { Calendar, Views, dateFnsLocalizer, Messages, SlotInfo } from 'react-big-calendar'
 import * as dateFns from 'date-fns'
 import { pl } from 'date-fns/locale'
 import { useRentals } from '@/hooks/useRentals'
+import { useAuth } from '@/hooks/useAuth'
 import { useUIStore } from '@/store/ui.store'
 import { CalendarHeader } from './CalendarHeader'
 import { RentalDetailDialog } from '@/components/rentals/RentalDetailDialog'
+import { RentalForm } from '@/components/rentals/RentalForm'
 import { Rental } from '@/lib/types'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import '@/styles/calendar.css'
 
-// Configure date-fns localizer for react-big-calendar
 const locales = { 'pl-PL': pl }
 
 const localizer = dateFnsLocalizer({
@@ -23,7 +30,6 @@ const localizer = dateFnsLocalizer({
   locales,
 })
 
-// Polish translations for react-big-calendar
 const polishMessages: Messages = {
   date: 'Data',
   time: 'Czas',
@@ -61,18 +67,33 @@ interface CalendarEvent {
 
 export function CalendarView() {
   const { rentals = [], isLoading } = useRentals()
+  const { user: currentUser } = useAuth()
   const { selectedDate, calendarView, setSelectedDate, setCalendarView } = useUIStore()
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [formInitialDate, setFormInitialDate] = useState<string>('')
 
-  // Convert rentals to calendar events for react-big-calendar
+  const canManage = currentUser?.role === 'admin' || currentUser?.role === 'owner'
+
+  const handleAddEvent = useCallback(() => {
+    setFormInitialDate('')
+    setIsFormOpen(true)
+  }, [])
+
+  const handleSelectSlot = useCallback((slotInfo: SlotInfo) => {
+    if (!canManage) return
+    const date = slotInfo.start
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    setFormInitialDate(dateStr)
+    setIsFormOpen(true)
+  }, [canManage])
+
   const events: CalendarEvent[] = useMemo(() => {
     if (!rentals || rentals.length === 0) return []
 
     return rentals.map((rental) => {
-      // Parse date from rental - assuming it's stored as string YYYY-MM-DD
       const rentalDate = new Date(rental.date)
       
-      // Parse setup and teardown times
       const [setupHour, setupMin] = rental.setupTime?.split(':').map(Number) || [9, 0]
       const [teardownHour, teardownMin] = rental.teardownTime?.split(':').map(Number) || [18, 0]
 
@@ -139,7 +160,7 @@ export function CalendarView() {
 
   return (
     <div className="overflow-hidden rounded-xl border bg-card bg-background shadow-sm">
-      <CalendarHeader events={events} />
+      <CalendarHeader events={events} onAddEvent={canManage ? handleAddEvent : undefined} />
       <Calendar
         localizer={localizer}
         events={events}
@@ -151,6 +172,7 @@ export function CalendarView() {
         date={selectedDate}
         onNavigate={handleNavigate}
         onSelectEvent={handleSelectEvent}
+        onSelectSlot={handleSelectSlot}
         eventPropGetter={EventStyleGetter}
         views={[Views.MONTH, Views.WEEK, Views.AGENDA]}
         messages={polishMessages}
@@ -163,7 +185,29 @@ export function CalendarView() {
       <RentalDetailDialog
         rental={selectedRental}
         onClose={() => setSelectedRental(null)}
+        onEdit={canManage ? () => {
+          setSelectedRental(null)
+          setFormInitialDate('')
+          setIsFormOpen(true)
+        } : undefined}
       />
+
+      {canManage && (
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Nowa rezerwacja</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <RentalForm
+                initialDate={formInitialDate || undefined}
+                onSuccess={() => setIsFormOpen(false)}
+                onCancel={() => setIsFormOpen(false)}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

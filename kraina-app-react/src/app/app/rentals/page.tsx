@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useRentals } from '@/hooks/useRentals'
 import { useAttractions } from '@/hooks/useAttractions'
 import { useAuth } from '@/hooks/useAuth'
@@ -35,29 +36,21 @@ import {
   Plus,
 } from 'lucide-react'
 import { Rental } from '@/lib/types'
-import { STATUS_DISPLAY, STATUS_COLORS } from '@/lib/constants'
+import { STATUS_DISPLAY, STATUS_COLORS, STATUS_OPTIONS } from '@/lib/constants'
 import { formatPrice } from '@/lib/utils'
 import { RentalForm } from '@/components/rentals/RentalForm'
 import { RentalDetailDialog } from '@/components/rentals/RentalDetailDialog'
-
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: 'all', label: 'Wszystkie' },
-  { value: 'pending', label: STATUS_DISPLAY.pending },
-  { value: 'confirmed', label: STATUS_DISPLAY.confirmed },
-  { value: 'inProgress', label: STATUS_DISPLAY.inProgress },
-  { value: 'completed', label: STATUS_DISPLAY.completed },
-  { value: 'cancelled', label: STATUS_DISPLAY.cancelled },
-]
 
 export default function RentalsPage() {
   const { rentals, isLoading, error } = useRentals()
   const { attractions } = useAttractions()
   const { user: currentUser } = useAuth()
+  const searchParams = useSearchParams()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
+  const [dateFrom, setDateFrom] = useState(searchParams.get('dateFrom') ?? '')
+  const [dateTo, setDateTo] = useState(searchParams.get('dateTo') ?? '')
 
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -103,21 +96,21 @@ export default function RentalsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-500">
-      {/* Action bar */}
-      <div className="flex justify-end">
-        <Button
-          onClick={() => {
-            setRentalToEdit(null)
-            setIsFormOpen(true)
-          }}
-          className="shadow-sm"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Nowa rezerwacja
-        </Button>
-      </div>
+      {canManage && (
+        <div className="flex justify-end">
+          <Button
+            onClick={() => {
+              setRentalToEdit(null)
+              setIsFormOpen(true)
+            }}
+            className="shadow-sm"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Nowa rezerwacja
+          </Button>
+        </div>
+      )}
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -156,8 +149,7 @@ export default function RentalsPage() {
         />
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+      <div className={`grid grid-cols-2 gap-4 ${canManage ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-foreground">{stats.total}</div>
@@ -182,15 +174,16 @@ export default function RentalsPage() {
             <div className="text-xs text-muted-foreground">Zakończone</div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-primary">{formatPrice(stats.revenue)}</div>
-            <div className="text-xs text-muted-foreground">Przychód</div>
-          </CardContent>
-        </Card>
+        {canManage && (
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-primary">{formatPrice(stats.revenue)}</div>
+              <div className="text-xs text-muted-foreground">Przychód</div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Table */}
       {isLoading ? (
         <Card>
           <CardContent className="p-6 space-y-4">
@@ -222,7 +215,7 @@ export default function RentalsPage() {
                   <TableHead>Klient</TableHead>
                   <TableHead className="hidden md:table-cell">Adres</TableHead>
                   <TableHead className="hidden lg:table-cell">Atrakcje</TableHead>
-                  <TableHead className="text-right">Koszt</TableHead>
+                  {canManage && <TableHead className="text-right">Koszt</TableHead>}
                   <TableHead className="text-center">Status</TableHead>
                 </TableRow>
               </TableHeader>
@@ -267,9 +260,11 @@ export default function RentalsPage() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatPrice(rental.totalCost ?? 0)}
-                    </TableCell>
+                    {canManage && (
+                      <TableCell className="text-right font-medium">
+                        {formatPrice(rental.totalCost ?? 0)}
+                      </TableCell>
+                    )}
                     <TableCell className="text-center">
                       <Badge
                         style={{
@@ -290,7 +285,6 @@ export default function RentalsPage() {
         </Card>
       )}
 
-      {/* Rental detail dialog */}
       <RentalDetailDialog
         rental={selectedRental}
         onClose={() => setSelectedRental(null)}
@@ -300,7 +294,6 @@ export default function RentalsPage() {
         } : undefined}
       />
 
-      {/* Form dialog (create/edit) */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>

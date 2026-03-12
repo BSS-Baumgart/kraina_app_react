@@ -1,7 +1,3 @@
-/**
- * Simple in-memory rate limiter for API routes.
- * For multi-instance deployments, replace with Redis-backed solution.
- */
 
 interface RateLimitEntry {
   count: number
@@ -10,7 +6,6 @@ interface RateLimitEntry {
 
 const store = new Map<string, RateLimitEntry>()
 
-// Cleanup stale entries every 5 minutes
 setInterval(() => {
   const now = Date.now()
   for (const [key, entry] of store) {
@@ -21,9 +16,7 @@ setInterval(() => {
 }, 5 * 60 * 1000)
 
 interface RateLimitOptions {
-  /** Max requests per window */
   limit: number
-  /** Window size in seconds */
   windowSeconds: number
 }
 

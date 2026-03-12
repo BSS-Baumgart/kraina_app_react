@@ -37,7 +37,6 @@ export default function ResetPasswordPage() {
       }
     })
 
-    // Also check if there's already a session (user came from a direct link)
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setReady(true)
     })

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -22,10 +23,20 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
+  )
+}
+
+function LoginContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
   const { setUser, setSession, setIsAuthenticated } = useAuthStore()
   const { setCurrentUser } = useAppStore()
+  const wasInactive = searchParams.get('reason') === 'inactivity'
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -51,7 +62,6 @@ export default function LoginPage() {
         throw new Error(error?.message || 'Błąd logowania')
       }
 
-      // Fetch user profile from our users table
       const { data: userProfile, error: profileError } = await supabase
         .from('users')
         .select('*')
@@ -83,8 +93,7 @@ export default function LoginPage() {
       setCurrentUser(mappedUser)
       setIsAuthenticated(true)
 
-      // Redirect to main app
-      window.location.href = '/app/calendar'
+      window.location.href = '/app/dashboard'
     } catch (err: any) {
       setError(err.message || 'Błąd logowania. Spróbuj ponownie.')
       console.error('Login error:', err)
@@ -102,6 +111,13 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent>
+          {wasInactive && (
+            <Alert className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>Sesja wygasła z powodu braku aktywności. Zaloguj się ponownie.</AlertDescription>
+            </Alert>
+          )}
+
           {error && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />

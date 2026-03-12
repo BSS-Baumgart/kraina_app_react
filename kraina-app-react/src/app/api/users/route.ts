@@ -26,7 +26,6 @@ export async function POST(request: Request) {
 
     const supabase = createServiceClient()
 
-    // 1. Create auth user
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -37,7 +36,6 @@ export async function POST(request: Request) {
       return Response.json({ error: authError.message }, { status: 400 })
     }
 
-    // 2. Insert into users table
     const { data: userData, error: userError } = await supabase
       .from('users')
       .insert({
@@ -56,7 +54,6 @@ export async function POST(request: Request) {
       .single()
 
     if (userError) {
-      // Rollback: delete auth user if users table insert fails
       await supabase.auth.admin.deleteUser(authData.user.id)
       return Response.json({ error: userError.message }, { status: 500 })
     }

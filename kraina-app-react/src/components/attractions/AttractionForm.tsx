@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useForm, type Resolver } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Attraction } from '@/lib/types'
+import { ATTRACTION_CATEGORIES } from '@/lib/constants'
+import { createZodResolver } from '@/lib/form-utils'
 import {
   Alert,
   AlertDescription,
@@ -35,7 +37,6 @@ import { X, UploadCloud, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { v4 as uuidv4 } from 'uuid'
 
-// Schemat walidacji Zod
 const formSchema = z.object({
   name: z.string().min(2, 'Nazwa musi mieć co najmniej 2 znaki').max(100, 'Nazwa jest za długa'),
   description: z.string().min(5, 'Opis musi mieć co najmniej 5 znaków').max(1000, 'Opis jest za długi'),
@@ -56,30 +57,6 @@ interface AttractionFormProps {
   onCancel?: () => void
 }
 
-const CATEGORIES = [
-  "Zamki dmuchane",
-  "Zjeżdżalnie",
-  "Place zabaw",
-  "Tory przeszkód",
-  "Inne"
-]
-
-// Bezpieczny resolver omijający błędy z rzucaniem ZodError w starszych/skonfliktowanych wersjach pakietów
-const customZodResolver = (schema: z.ZodSchema): Resolver<FormValues> => async (values) => {
-  const result = await schema.safeParseAsync(values)
-  if (result.success) {
-    return { values: result.data, errors: {} }
-  }
-  const errors: Record<string, any> = {}
-  result.error.issues.forEach((issue) => {
-    const path = issue.path[0] as string
-    if (path && !errors[path]) {
-      errors[path] = { type: issue.code as any, message: issue.message }
-    }
-  })
-  return { values: {} as any, errors }
-}
-
 export function AttractionForm({ attractionToEdit, onSuccess, onCancel }: AttractionFormProps) {
   const createMutation = useCreateAttraction()
   const updateMutation = useUpdateAttraction()
@@ -91,7 +68,7 @@ export function AttractionForm({ attractionToEdit, onSuccess, onCancel }: Attrac
   const [isUploading, setIsUploading] = useState(false)
 
   const form = useForm<FormValues>({
-    resolver: customZodResolver(formSchema),
+    resolver: createZodResolver<FormValues>(formSchema),
     defaultValues: attractionToEdit ? {
       name: attractionToEdit.name || '',
       description: attractionToEdit.description || '',
@@ -115,7 +92,6 @@ export function AttractionForm({ attractionToEdit, onSuccess, onCancel }: Attrac
     },
   })
 
-  // Inicjalizacja formularza danymi z wybranej atrakcji (dla pewności, gdyby komponent nie był odmontowywany)
   useEffect(() => {
     if (attractionToEdit) {
       form.reset({
@@ -236,7 +212,6 @@ export function AttractionForm({ attractionToEdit, onSuccess, onCancel }: Attrac
   const hasErrors = Object.keys(form.formState.errors).length > 0
 
   const onError = (errors: any) => {
-    // Collect all error messages and show them as toasts
     const errorMessages = Object.values(errors).map((err: any) => err?.message).filter(Boolean)
     
     if (errorMessages.length > 0) {
@@ -287,11 +262,10 @@ export function AttractionForm({ attractionToEdit, onSuccess, onCancel }: Attrac
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {CATEGORIES.map(cat => (
+                    {ATTRACTION_CATEGORIES.map(cat => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                     ))}
-                    {/* Fallback dla wartości spoza standardowej listy */}
-                    {field.value && !CATEGORIES.includes(field.value) && (
+                    {field.value && !ATTRACTION_CATEGORIES.includes(field.value) && (
                       <SelectItem value={field.value}>{field.value}</SelectItem>
                     )}
                   </SelectContent>
@@ -389,7 +363,6 @@ export function AttractionForm({ attractionToEdit, onSuccess, onCancel }: Attrac
             )}
           />
 
-          {/* Upload zdjęć */}
           <div className="md:col-span-2 space-y-4 pt-2">
             <div>
               <FormLabel>Zdjęcia (Max 4 zdjęcia)</FormLabel>
@@ -399,7 +372,6 @@ export function AttractionForm({ attractionToEdit, onSuccess, onCancel }: Attrac
             </div>
             
             <div className="flex flex-wrap gap-4">
-              {/* Istniejące zdjęcia */}
               {existingImages.map((url, index) => (
                 <div key={`existing-${index}`} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border group bg-muted flex-shrink-0">
                   <img src={url} alt={`Existing ${index}`} className="w-full h-full object-cover" />
@@ -413,7 +385,6 @@ export function AttractionForm({ attractionToEdit, onSuccess, onCancel }: Attrac
                 </div>
               ))}
 
-              {/* Nowe pliki - podgląd */}
               {selectedFiles.map((file, index) => (
                 <div key={`new-${index}`} className="relative w-24 h-24 rounded-lg overflow-hidden border border-border group bg-muted flex-shrink-0">
                   <img src={URL.createObjectURL(file)} alt={`New ${index}`} className="w-full h-full object-cover" />
@@ -427,7 +398,6 @@ export function AttractionForm({ attractionToEdit, onSuccess, onCancel }: Attrac
                 </div>
               ))}
 
-              {/* Przycisk uploadu */}
               {existingImages.length + selectedFiles.length < 4 && (
                 <label className="w-24 h-24 rounded-lg border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 cursor-pointer flex flex-col items-center justify-center text-muted-foreground hover:text-primary transition-colors">
                   <UploadCloud className="w-6 h-6 mb-1" />

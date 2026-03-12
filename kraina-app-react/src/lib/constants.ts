@@ -1,3 +1,5 @@
+import type { RentalStatus, UserRole } from '@/lib/types'
+
 export const USER_ROLES = {
   EMPLOYEE: 'employee',
   ADMIN: 'admin',
@@ -51,9 +53,12 @@ export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || 'Kraina Zjeżdżalni
 export const DEFAULT_SETUP_TIME = '09:00'
 export const DEFAULT_TEARDOWN_TIME = '18:00'
 
+export const INACTIVITY_TIMEOUT_MS = 20 * 60 * 1000
+
 export const ROUTE_PATHS = {
   LOGIN: '/login',
   APP: '/app',
+  DASHBOARD: '/app/dashboard',
   CALENDAR: '/app/calendar',
   ATTRACTIONS: '/app/attractions',
   STATISTICS: '/app/statistics',
@@ -61,3 +66,88 @@ export const ROUTE_PATHS = {
   HELP: '/help',
   PRIVACY: '/privacy',
 } as const
+
+export const EXPENSE_CATEGORIES = {
+  fuel: 'Paliwo',
+  food: 'Jedzenie',
+  repair: 'Naprawa',
+  material: 'Materiały',
+  attraction_repair: 'Naprawa atrakcji',
+  other: 'Inne',
+} as const
+
+export const PAYMENT_TYPE_DISPLAY = {
+  cash: 'Gotówka',
+  blik: 'BLIK',
+  transfer: 'Przelew',
+} as const
+
+export const CHART_COLORS = [
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)',
+  'var(--chart-4)', 'var(--chart-5)',
+]
+
+export const CHART_COLORS_EXTENDED = [
+  'var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)',
+  'var(--chart-4)', 'var(--chart-5)',
+  '#F59E0B', '#10B981', '#EC4899',
+]
+
+export const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: 'all', label: 'Wszystkie' },
+  { value: 'pending', label: STATUS_DISPLAY.pending },
+  { value: 'confirmed', label: STATUS_DISPLAY.confirmed },
+  { value: 'inProgress', label: STATUS_DISPLAY.inProgress },
+  { value: 'completed', label: STATUS_DISPLAY.completed },
+  { value: 'cancelled', label: STATUS_DISPLAY.cancelled },
+]
+
+export const STATUS_ORDER = ['pending', 'confirmed', 'inProgress', 'completed', 'cancelled'] as const
+
+export const MONTH_NAMES_SHORT = [
+  'Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze',
+  'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru',
+]
+
+export const GRANULARITY_LABELS: Record<string, string> = {
+  day: 'Dzień',
+  week: 'Tydzień',
+  month: 'Miesiąc',
+}
+
+export const STATUS_TRANSITIONS: Record<string, { value: RentalStatus; label: string }[]> = {
+  pending: [
+    { value: 'confirmed', label: 'Potwierdź' },
+    { value: 'cancelled', label: 'Anuluj' },
+  ],
+  confirmed: [
+    { value: 'inProgress', label: 'Rozpocznij' },
+    { value: 'cancelled', label: 'Anuluj' },
+  ],
+  inProgress: [
+    { value: 'completed', label: 'Zakończ' },
+    { value: 'cancelled', label: 'Anuluj' },
+  ],
+  completed: [],
+  cancelled: [],
+}
+
+export const ATTRACTION_CATEGORIES = [
+  'Zamki dmuchane',
+  'Zjeżdżalnie',
+  'Place zabaw',
+  'Tory przeszkód',
+  'Inne',
+]
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  employee: 'Pracownik',
+  admin: 'Administrator',
+  owner: 'Właściciel',
+}
+
+export const ROLE_VARIANTS: Record<UserRole, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  employee: 'secondary',
+  admin: 'default',
+  owner: 'default',
+}

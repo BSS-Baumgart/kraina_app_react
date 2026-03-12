@@ -38,7 +38,6 @@ export function useAttractions() {
   return { attractions, isLoading, error }
 }
 
-// Mutacja do włączania/wyłączania atrakcji
 export function useToggleAttractionStatus() {
   const queryClient = useQueryClient()
   
@@ -54,7 +53,7 @@ export function useToggleAttractionStatus() {
       if (error) throw error
       return data
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['attractions'] })
       toast.success(`Atrakcja została ${variables.isActive ? 'aktywowana' : 'dezaktywowana'}.`)
     },
@@ -65,7 +64,6 @@ export function useToggleAttractionStatus() {
   })
 }
 
-// Mutacja do trwałego usunięcia atrakcji
 export function useDeleteAttraction() {
   const queryClient = useQueryClient()
   
@@ -90,7 +88,6 @@ export function useDeleteAttraction() {
   })
 }
 
-// Mutacja dodająca atrakcję
 export function useCreateAttraction() {
   const queryClient = useQueryClient()
   
@@ -130,7 +127,6 @@ export function useCreateAttraction() {
   })
 }
 
-// Mutacja aktualizująca
 export function useUpdateAttraction() {
   const queryClient = useQueryClient()
   

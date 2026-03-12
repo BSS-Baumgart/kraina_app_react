@@ -40,6 +40,9 @@ function mapRental(rental: any): Rental {
     status: toAppStatus(rental.status),
     notes: rental.notes,
     contractPhotoUrl: rental.contract_photo_url,
+    paymentType: rental.payment_type ?? undefined,
+    hasInvoice: rental.has_invoice ?? false,
+    hasReceipt: rental.has_receipt ?? false,
     createdById: rental.created_by,
     createdAt: rental.created_at,
     updatedAt: rental.updated_at,
@@ -150,6 +153,10 @@ export function useUpdateRental() {
       if (updates.assignedEmployeeId !== undefined) mapped.assigned_employee_id = updates.assignedEmployeeId
       if (updates.notes !== undefined) mapped.notes = updates.notes
       if (updates.status !== undefined) mapped.status = toDbStatus(updates.status)
+      if (updates.contractPhotoUrl !== undefined) mapped.contract_photo_url = updates.contractPhotoUrl
+      if (updates.paymentType !== undefined) mapped.payment_type = updates.paymentType
+      if (updates.hasInvoice !== undefined) mapped.has_invoice = updates.hasInvoice
+      if (updates.hasReceipt !== undefined) mapped.has_receipt = updates.hasReceipt
       mapped.updated_at = new Date().toISOString()
 
       const { data, error } = await supabase
@@ -231,7 +238,6 @@ export function useUpsertAssignment() {
       assemblyRate: number
       disassemblyRate: number
     }) => {
-      // Check for existing assignment
       const { data: existing } = await supabase
         .from('employee_assignments')
         .select('id, did_assembly, did_disassembly')

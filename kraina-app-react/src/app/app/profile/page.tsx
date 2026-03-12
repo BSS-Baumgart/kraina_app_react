@@ -3,15 +3,16 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAuthStore } from '@/store/auth.store'
 import { useRentals } from '@/hooks/useRentals'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { User as UserIcon, Phone, MapPin, Mail, Shield, Wrench, Wallet, CheckCircle2, Minus } from 'lucide-react'
-import { useForm, Resolver } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { supabase } from '@/lib/supabase'
+import { createZodResolver } from '@/lib/form-utils'
 import { toast } from 'sonner'
 import {
   Form,
@@ -41,22 +42,6 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>
 
-// Omijamy wywalanie error-overlay przez Zoda w Next 16 Turbopack
-const customZodResolver = (schema: z.ZodSchema): Resolver<ProfileFormValues> => async (values) => {
-  const result = await schema.safeParseAsync(values)
-  if (result.success) {
-    return { values: result.data, errors: {} }
-  }
-  const errors: Record<string, any> = {}
-  result.error.issues.forEach((issue) => {
-    const path = issue.path[0] as string
-    if (path && !errors[path]) {
-      errors[path] = { type: issue.code as any, message: issue.message }
-    }
-  })
-  return { values: {} as any, errors }
-}
-
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore()
   const { rentals } = useRentals()
@@ -64,7 +49,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
 
   const form = useForm<ProfileFormValues>({
-    resolver: customZodResolver(profileSchema),
+    resolver: createZodResolver<ProfileFormValues>(profileSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -75,7 +60,6 @@ export default function ProfilePage() {
     },
   })
 
-  // Inicjalizacja formularza kiedy użytkownik jest dostępny
   useEffect(() => {
     if (user) {
       form.reset({
@@ -101,8 +85,7 @@ export default function ProfilePage() {
         address: values.address || null,
       }
 
-      // Tylko admin i owner mogą edytować swoje stawki
-      if (user.role === 'admin' || user.role === 'owner') {
+      if (user.role === 'owner') {
         updateData.assembly_rate = values.assemblyRate
         updateData.disassembly_rate = values.disassemblyRate
       }
@@ -114,7 +97,6 @@ export default function ProfilePage() {
 
       if (error) throw error
 
-      // Aktualizacja stanu UI po udanym zapisie
       setUser({
         ...user,
         firstName: values.firstName,
@@ -153,7 +135,6 @@ export default function ProfilePage() {
     ? user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : 'KZ'
 
-  // Real assignment data from rentals
   const myAssignments = useMemo(() => {
     if (!user) return []
     return rentals
@@ -184,7 +165,6 @@ export default function ProfilePage() {
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex flex-col md:flex-row gap-6">
         
-        {/* Lewa kolumna: Zwięzłe info o profilu */}
         <div className="w-full md:w-1/3 space-y-6">
           <Card>
             <CardContent className="pt-6 flex flex-col items-center text-center">
@@ -227,7 +207,6 @@ export default function ProfilePage() {
           </Card>
         </div>
 
-        {/* Prawa kolumna: Szczegóły i Edycja profilu */}
         <div className="w-full md:w-2/3 flex flex-col gap-6">
           <Card>
             <CardHeader>
@@ -350,7 +329,7 @@ export default function ProfilePage() {
                         </FormItem>
                       )}
                     />
-                    {(user.role === 'admin' || user.role === 'owner') && (
+                    {user.role === 'owner' && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t mt-4">
                         <FormField
                           control={form.control}
@@ -397,7 +376,6 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Tabela realizacji */}
           <Card>
             <CardHeader className="py-4">
               <CardTitle className="text-lg">Ostatnie realizacje</CardTitle>

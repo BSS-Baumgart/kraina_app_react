@@ -201,14 +201,12 @@ export default function AttractionsPage() {
                 <div className="space-y-4">
                   <div className="w-full h-[300px] sm:h-[400px] rounded-xl overflow-hidden bg-muted flex items-center justify-center relative">
                     {selectedAttraction.imageUrls && selectedAttraction.imageUrls.length > 0 ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={selectedAttraction.imageUrls[selectedImageIndex] || selectedAttraction.primaryImageUrl}
                         alt={selectedAttraction.name}
                         className="w-full h-full object-contain transition-all duration-300"
                       />
                     ) : selectedAttraction.primaryImageUrl ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={selectedAttraction.primaryImageUrl}
                         alt={selectedAttraction.name}
@@ -222,7 +220,6 @@ export default function AttractionsPage() {
                     )}
                   </div>
 
-                  {/* Galeria miniatur */}
                   {selectedAttraction.imageUrls && selectedAttraction.imageUrls.length > 1 && (
                     <div className="flex gap-3 overflow-x-auto pb-2">
                       {selectedAttraction.imageUrls.map((url: string, idx: number) => (
@@ -233,7 +230,6 @@ export default function AttractionsPage() {
                             idx === selectedImageIndex ? 'border-primary ring-2 ring-primary/20' : 'border-transparent opacity-70 hover:opacity-100 hover:border-border'
                           }`}
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={url} alt={`Zdjęcie ${idx + 1}`} className="w-full h-full object-cover" />
                         </button>
                       ))}
@@ -241,7 +237,6 @@ export default function AttractionsPage() {
                   )}
                 </div>
 
-                {/* Opis */}
                 <div className="space-y-3">
                   <h3 className="text-xl font-semibold text-foreground tracking-tight">Opis</h3>
                   <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
@@ -249,7 +244,6 @@ export default function AttractionsPage() {
                   </p>
                 </div>
 
-                {/* Specyfikacja */}
                 <div className="space-y-3">
                   <h3 className="text-xl font-semibold text-foreground tracking-tight">Specyfikacja</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -276,7 +270,6 @@ export default function AttractionsPage() {
                   </div>
                 </div>
 
-                {/* Finanse */}
                 <div className="space-y-3">
                   <h3 className="text-xl font-semibold text-foreground tracking-tight">Finanse</h3>
                   <Card className="shadow-none bg-card border-border overflow-hidden">
@@ -288,7 +281,6 @@ export default function AttractionsPage() {
                 </div>
               </div>
 
-              {/* Akcje administracyjne */}
               {canManageAttractions && (
                 <div className="p-6 border-t border-border mt-auto flex flex-col sm:flex-row sm:justify-between items-center gap-3 w-full bg-background/95 backdrop-blur sticky bottom-0">
                   <div className="flex w-full sm:w-auto gap-2">
@@ -356,7 +348,6 @@ export default function AttractionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal dodawania / edycji atrakcji */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -367,8 +358,6 @@ export default function AttractionsPage() {
               attractionToEdit={attractionToEdit} 
               onSuccess={() => {
                 setIsFormOpen(false)
-                // Opcjonalnie jeśli to była edycja otwartej na podglądzie atrakcji,
-                // zamykamy panel żeby musiał go odświeżyć kliknięciem
                 if (attractionToEdit && selectedAttraction?.id === attractionToEdit.id) {
                   setSelectedAttraction(null)
                 }

@@ -15,7 +15,6 @@ interface CalendarHeaderProps {
 export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
   const { selectedDate, setSelectedDate, calendarView, setCalendarView } = useUIStore()
 
-  // Calculate event count based on selected date and view type
   const eventCount = useMemo(() => {
     return getEventsCount(events, selectedDate, calendarView as any)
   }, [events, selectedDate, calendarView])
@@ -39,7 +38,6 @@ export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
 
   return (
     <div className="flex items-center gap-2 border-b bg-background px-3 py-2 sm:px-4 sm:py-2.5">
-      {/* Today Button — compact */}
       <button
         onClick={handleToday}
         className="flex shrink-0 w-10 flex-col items-start overflow-hidden rounded-md border hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -50,7 +48,6 @@ export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
         <p className="flex w-full items-center justify-center text-sm font-bold py-0.5">{today.getDate()}</p>
       </button>
 
-      {/* Month / Year + badge */}
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-sm font-semibold capitalize sm:text-base truncate">
@@ -65,7 +62,6 @@ export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
         </p>
       </div>
 
-      {/* Nav arrows */}
       <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handlePreviousDate}>
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -73,7 +69,6 @@ export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
         <ChevronRight className="h-4 w-4" />
       </Button>
 
-      {/* View Switcher — icons only on mobile, icons+text on sm+ */}
       <div className="inline-flex shrink-0 overflow-hidden rounded-lg border">
         <Button
           size="sm"
@@ -104,7 +99,6 @@ export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
         </Button>
       </div>
 
-      {/* Add Event Button */}
       {onAddEvent && (
         <Button onClick={onAddEvent} size="sm" className="shrink-0">
           + Dodaj

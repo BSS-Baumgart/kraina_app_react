@@ -1,57 +1,39 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useForm, type Resolver } from 'react-hook-form'
-import * as z from 'zod'
-import { Rental, Attraction } from '@/lib/types'
+import { useForm } from 'react-hook-form'
+import { Rental, Client } from '@/lib/types'
 import { rentalFormSchema, type RentalFormInput } from '@/lib/schemas'
 import { DEFAULT_SETUP_TIME, DEFAULT_TEARDOWN_TIME } from '@/lib/constants'
+import { createZodResolver } from '@/lib/form-utils'
 import { useAttractions } from '@/hooks/useAttractions'
 import { useRentals, useCreateRental, useUpdateRental } from '@/hooks/useRentals'
-import { useUsers } from '@/hooks/useUsers'
+import { useClients, useUpsertClient } from '@/hooks/useClients'
 import { useAvailability } from '@/hooks/useAvailability'
 import { useCostCalculation } from '@/hooks/useCostCalculation'
-import { formatPrice } from '@/lib/utils'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { useDistance } from '@/hooks/useDistance'
+import { Form } from '@/components/ui/form'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   ChevronLeft,
   ChevronRight,
-  Calendar,
-  Clock,
-  User,
-  Phone,
-  MapPin,
   Package,
-  FileText,
+  User,
   Check,
 } from 'lucide-react'
+import { useSettingsStore } from '@/store/settings.store'
+import { RentalFormStepAttractions } from './RentalFormStepAttractions'
+import { RentalFormStepClient } from './RentalFormStepClient'
+import { RentalFormStepSummary } from './RentalFormStepSummary'
 
-const customZodResolver = (schema: z.ZodSchema): Resolver<RentalFormInput> => async (values) => {
-  const result = await schema.safeParseAsync(values)
-  if (result.success) {
-    // Return original values (not result.data) to avoid z.coerce transforming '' → 0
-    // which causes react-hook-form to detect a change and re-trigger validation infinitely
-    return { values: values as RentalFormInput, errors: {} }
-  }
-  const errors: Record<string, any> = {}
-  result.error.issues.forEach((issue) => {
-    const path = issue.path.join('.')
-    if (path && !errors[path]) {
-      errors[path] = { type: issue.code as any, message: issue.message }
-    }
-  })
-  return { values: {} as any, errors }
+function parseAddress(address: string): { street: string; houseNumber: string; postalCode: string; city: string } {
+  const match = address.match(/^(.+?)\s+(\S+),\s*(\d{2}-\d{3})\s+(.+)$/)
+  if (match) return { street: match[1], houseNumber: match[2], postalCode: match[3], city: match[4] }
+  return { street: address, houseNumber: '', postalCode: '', city: '' }
+}
+
+function buildAddress(data: { street: string; houseNumber: string; postalCode: string; city: string }): string {
+  return `${data.street} ${data.houseNumber}, ${data.postalCode} ${data.city}`
 }
 
 interface RentalFormProps {
@@ -73,13 +55,20 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
   const [useCustomPrice, setUseCustomPrice] = useState(rentalToEdit?.customPrice != null)
   const isEditing = !!rentalToEdit
 
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [durationMinutes, setDurationMinutes] = useState<number | null>(null)
+
   const { attractions } = useAttractions()
   const { rentals } = useRentals()
+  const { clients } = useClients()
   const createMutation = useCreateRental()
   const updateMutation = useUpdateRental()
+  const upsertClientMutation = useUpsertClient()
+  const transport = useSettingsStore((s) => s.transport)
+  const { calculate: calculateDistance, isLoading: isDistanceLoading, error: distanceError } = useDistance()
 
   const form = useForm<RentalFormInput>({
-    resolver: customZodResolver(rentalFormSchema),
+    resolver: createZodResolver<RentalFormInput>(rentalFormSchema),
     defaultValues: rentalToEdit
       ? {
           date: rentalToEdit.date,
@@ -87,7 +76,7 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
           teardownTime: rentalToEdit.teardownTime,
           clientName: rentalToEdit.clientName,
           clientPhone: rentalToEdit.clientPhone,
-          address: rentalToEdit.address,
+          ...parseAddress(rentalToEdit.address),
           attractionIds: rentalToEdit.attractionIds,
           customPrice: rentalToEdit.customPrice ?? '',
           distanceKm: rentalToEdit.distanceKm ?? '',
@@ -99,7 +88,10 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
           teardownTime: DEFAULT_TEARDOWN_TIME,
           clientName: '',
           clientPhone: '',
-          address: '',
+          street: '',
+          houseNumber: '',
+          postalCode: '',
+          city: '',
           attractionIds: [],
           customPrice: '',
           distanceKm: '',
@@ -115,7 +107,7 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
         teardownTime: rentalToEdit.teardownTime,
         clientName: rentalToEdit.clientName,
         clientPhone: rentalToEdit.clientPhone,
-        address: rentalToEdit.address,
+        ...parseAddress(rentalToEdit.address),
         attractionIds: rentalToEdit.attractionIds,
         customPrice: rentalToEdit.customPrice ?? '',
         distanceKm: rentalToEdit.distanceKm ?? '',
@@ -141,6 +133,25 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
     rentalToEdit?.id
   )
 
+  const watchClientName = form.watch('clientName')
+  const filteredClients = clients.filter(
+    (c) => watchClientName && watchClientName.length >= 2 &&
+      c.name.toLowerCase().includes(watchClientName.toLowerCase())
+  )
+
+  const selectClient = (client: Client) => {
+    form.setValue('clientName', client.name)
+    form.setValue('clientPhone', client.phone || '')
+    if (client.address) {
+      const parsed = parseAddress(client.address)
+      form.setValue('street', parsed.street)
+      form.setValue('houseNumber', parsed.houseNumber)
+      form.setValue('postalCode', parsed.postalCode)
+      form.setValue('city', parsed.city)
+    }
+    setShowSuggestions(false)
+  }
+
   const distanceNum = typeof watchDistanceKm === 'number' ? watchDistanceKm : (parseFloat(String(watchDistanceKm)) || 0)
   const costs = useCostCalculation(attractions, selectedIds, distanceNum)
 
@@ -149,7 +160,6 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
       const next = prev.includes(attractionId)
         ? prev.filter((id) => id !== attractionId)
         : [...prev, attractionId]
-      // Sync to form silently (no validation trigger)
       form.setValue('attractionIds', next)
       return next
     })
@@ -165,20 +175,23 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
     if (step === 1) {
       const name = form.getValues('clientName')
       const phone = form.getValues('clientPhone')
-      const address = form.getValues('address')
-      return !!name && name.length >= 2 && !!phone && phone.length >= 7 && !!address && address.length >= 3
+      const street = form.getValues('street')
+      const houseNumber = form.getValues('houseNumber')
+      const city = form.getValues('city')
+      return !!name && name.length >= 2 && !!phone && phone.length >= 7 && !!street && street.length >= 2 && !!houseNumber && !!city && city.length >= 2
     }
     return true
   }
 
   const onSubmit = async (data: RentalFormInput) => {
+    const fullAddress = buildAddress(data)
     const payload = {
       date: data.date,
       setupTime: data.setupTime,
       teardownTime: data.teardownTime,
       clientName: data.clientName,
       clientPhone: data.clientPhone,
-      address: data.address,
+      address: fullAddress,
       attractionIds: data.attractionIds,
       rentalCost: costs.rentalCost,
       deliveryCost: costs.deliveryCost,
@@ -187,25 +200,32 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
       notes: data.notes || undefined,
     }
 
+    const afterSuccess = () => {
+      upsertClientMutation.mutate({
+        name: data.clientName,
+        phone: data.clientPhone,
+        address: fullAddress,
+      })
+      onSuccess?.()
+    }
+
     if (isEditing) {
       updateMutation.mutate(
         { id: rentalToEdit.id, updates: payload },
-        { onSuccess: () => onSuccess?.() }
+        { onSuccess: afterSuccess }
       )
     } else {
-      createMutation.mutate(payload, { onSuccess: () => onSuccess?.() })
+      createMutation.mutate(payload, { onSuccess: afterSuccess })
     }
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending
 
-  // Get attraction name by id
   const getAttractionById = (id: string) => attractions.find((a) => a.id === id)
 
   return (
     <Form {...form}>
       <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-        {/* Step indicators */}
         <div className="flex items-center justify-between gap-2 mb-6">
           {STEPS.map((s, i) => {
             const Icon = s.icon
@@ -229,332 +249,53 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
           })}
         </div>
 
-        {/* Step 1: Date + Attractions */}
         {step === 0 && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" /> Data
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="setupTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" /> Montaż
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="teardownTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" /> Demontaż
-                    </FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div>
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <Package className="h-4 w-4" /> Dostępne atrakcje ({availableAttractions.length})
-                </label>
-                {availableAttractions.length === 0 ? (
-                  <p className="text-sm text-muted-foreground py-3">
-                    Brak dostępnych atrakcji w wybranym terminie.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 mt-2">
-                    {availableAttractions.map((attraction) => {
-                      const isSelected = selectedIds.includes(attraction.id)
-                      return (
-                        <Card
-                          key={attraction.id}
-                          className={`cursor-pointer transition-colors ${
-                            isSelected
-                              ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                              : 'hover:border-primary/50'
-                          }`}
-                          onClick={() => toggleAttraction(attraction.id)}
-                        >
-                          <CardContent className="p-3 flex items-center gap-3">
-                            <div
-                              className={`size-4 shrink-0 rounded-[4px] border flex items-center justify-center transition-colors ${
-                                isSelected
-                                  ? 'border-primary bg-primary text-primary-foreground'
-                                  : 'border-input'
-                              }`}
-                            >
-                              {isSelected && <Check className="size-3" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm truncate">{attraction.name}</div>
-                              <div className="text-xs text-muted-foreground">{attraction.category}</div>
-                            </div>
-                            <span className="text-sm font-semibold text-primary shrink-0">
-                              {formatPrice(attraction.rentalPrice)}
-                            </span>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {selectedIds.length > 0 && (
-              <Card className="bg-muted/50">
-                <CardContent className="p-3">
-                  <div className="text-sm font-medium">
-                    Wybrano: {selectedIds.length} atrakcj{selectedIds.length === 1 ? 'ę' : selectedIds.length < 5 ? 'e' : 'i'}
-                  </div>
-                  <div className="text-sm text-primary font-semibold">
-                    Koszt wynajmu: {formatPrice(costs.rentalCost)}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          <RentalFormStepAttractions
+            availableAttractions={availableAttractions}
+            selectedIds={selectedIds}
+            toggleAttraction={toggleAttraction}
+            rentalCost={costs.rentalCost}
+          />
         )}
 
-        {/* Step 2: Client info */}
         {step === 1 && (
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="clientName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <User className="h-4 w-4" /> Imię i nazwisko klienta
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="Jan Kowalski" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="clientPhone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" /> Telefon klienta
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="+48 123 456 789" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" /> Adres dostawy
-                  </FormLabel>
-                  <FormControl>
-                    <Input placeholder="ul. Przykładowa 10, Warszawa" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="distanceKm"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Dystans (km)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.1"
-                      placeholder="np. 15"
-                      {...field}
-                      value={field.value ?? ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <RentalFormStepClient
+            filteredClients={filteredClients}
+            showSuggestions={showSuggestions}
+            setShowSuggestions={setShowSuggestions}
+            selectClient={selectClient}
+            isDistanceLoading={isDistanceLoading}
+            distanceError={distanceError}
+            durationMinutes={durationMinutes}
+            onCalculateDistance={async () => {
+              const address = buildAddress({
+                street: form.getValues('street'),
+                houseNumber: form.getValues('houseNumber'),
+                postalCode: form.getValues('postalCode'),
+                city: form.getValues('city'),
+              })
+              const result = await calculateDistance(address)
+              if (result) {
+                form.setValue('distanceKm', result.distanceKm)
+                setDurationMinutes(result.durationMinutes)
+              }
+            }}
+          />
         )}
 
-        {/* Step 3: Summary */}
         {step === 2 && (
-          <div className="space-y-4">
-            {/* Summary card */}
-            <Card>
-              <CardContent className="p-4 space-y-3">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Szczegóły rezerwacji</h4>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-muted-foreground">Data:</div>
-                  <div className="font-medium">
-                    {new Date(watchDate + 'T00:00:00').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                  </div>
-                  <div className="text-muted-foreground">Godziny:</div>
-                  <div className="font-medium">{watchSetupTime} – {watchTeardownTime}</div>
-                  <div className="text-muted-foreground">Klient:</div>
-                  <div className="font-medium">{form.getValues('clientName')}</div>
-                  <div className="text-muted-foreground">Telefon:</div>
-                  <div className="font-medium">{form.getValues('clientPhone')}</div>
-                  <div className="text-muted-foreground">Adres:</div>
-                  <div className="font-medium">{form.getValues('address')}</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Selected attractions */}
-            <Card>
-              <CardContent className="p-4 space-y-2">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Atrakcje ({selectedIds.length})</h4>
-                {selectedIds.map((id: string) => {
-                  const attr = getAttractionById(id)
-                  return attr ? (
-                    <div key={id} className="flex justify-between text-sm py-1">
-                      <span>{attr.name}</span>
-                      <span className="font-medium">{formatPrice(attr.rentalPrice)}</span>
-                    </div>
-                  ) : null
-                })}
-              </CardContent>
-            </Card>
-
-            {/* Costs */}
-            <Card>
-              <CardContent className="p-4 space-y-2">
-                <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Koszty</h4>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Wynajem atrakcji:</span>
-                  <span className={useCustomPrice ? 'line-through text-muted-foreground' : ''}>{formatPrice(costs.rentalCost)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Dojazd ({distanceNum} km × 5 zł):</span>
-                  <span className={useCustomPrice ? 'line-through text-muted-foreground' : ''}>{formatPrice(costs.deliveryCost)}</span>
-                </div>
-                {useCustomPrice && (
-                  <div className="flex justify-between text-sm font-medium">
-                    <span className="text-orange-500">Cena nadpisana:</span>
-                    <span className="text-orange-500">{formatPrice(Number(form.getValues('customPrice')) || 0)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm font-bold border-t pt-2 mt-2">
-                  <span>Razem:</span>
-                  <span className="text-primary">
-                    {formatPrice(useCustomPrice ? (Number(form.getValues('customPrice')) || 0) : costs.totalCost)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Custom price toggle */}
-            <div className="space-y-3">
-              <div
-                className="flex items-center gap-3 cursor-pointer select-none"
-                onClick={() => {
-                  const next = !useCustomPrice
-                  setUseCustomPrice(next)
-                  if (!next) form.setValue('customPrice', '')
-                }}
-              >
-                <div
-                  className={`relative inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors ${
-                    useCustomPrice ? 'bg-orange-500' : 'bg-input'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform ${
-                      useCustomPrice ? 'translate-x-4' : 'translate-x-0'
-                    }`}
-                  />
-                </div>
-                <span className="text-sm font-medium">Nadpisz cenę całkowitą</span>
-              </div>
-
-              {useCustomPrice && (
-                <FormField
-                  control={form.control}
-                  name="customPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Cena całkowita (zł)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="Wpisz cenę końcową"
-                          {...field}
-                          value={field.value ?? ''}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2">
-                    <FileText className="h-4 w-4" /> Notatki
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Dodatkowe informacje..."
-                      rows={3}
-                      {...field}
-                      value={field.value ?? ''}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <RentalFormStepSummary
+            selectedIds={selectedIds}
+            getAttractionById={getAttractionById}
+            costs={costs}
+            useCustomPrice={useCustomPrice}
+            setUseCustomPrice={setUseCustomPrice}
+            distanceNum={distanceNum}
+            pricePerKm={transport.pricePerKm}
+            buildAddress={buildAddress}
+          />
         )}
 
-        {/* Navigation */}
         <div className="flex justify-between gap-3 pt-2">
           <div className="flex gap-2">
             {step > 0 && (
@@ -593,3 +334,4 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
     </Form>
   )
 }
+

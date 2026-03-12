@@ -35,6 +35,36 @@ export function useClients() {
   return { clients, isLoading, error }
 }
 
+export function useUpsertClient() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: { name: string; phone: string; address?: string }) => {
+      const { data: existing } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('phone', payload.phone)
+        .maybeSingle()
+
+      if (existing) {
+        const { error } = await supabase
+          .from('clients')
+          .update({ name: payload.name, address: payload.address ?? null })
+          .eq('id', existing.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('clients')
+          .insert({ name: payload.name, phone: payload.phone, address: payload.address ?? null })
+        if (error) throw error
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clients'] })
+    },
+  })
+}
+
 export function useUpdateClient() {
   const queryClient = useQueryClient()
 

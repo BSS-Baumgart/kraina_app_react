@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Rental, RentalStatus } from '@/lib/types'
+import { Rental, PaymentType } from '@/lib/types'
 import { useAttractions } from '@/hooks/useAttractions'
 import { useUsers } from '@/hooks/useUsers'
 import { useAuth } from '@/hooks/useAuth'
-import { useUpdateRentalStatus, useDeleteRental, useUpsertAssignment } from '@/hooks/useRentals'
-import { STATUS_DISPLAY, STATUS_COLORS } from '@/lib/constants'
+import { useUpdateRentalStatus, useDeleteRental, useUpsertAssignment, useUpdateRental } from '@/hooks/useRentals'
+import { supabase } from '@/lib/supabase'
+import { STATUS_DISPLAY, STATUS_COLORS, STATUS_TRANSITIONS } from '@/lib/constants'
 import { formatPrice } from '@/lib/utils'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -28,36 +30,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Clock,
   User,
   Phone,
   MapPin,
-  Package,
   Trash2,
   Edit,
   X,
   ChevronRight,
   Wrench,
   DollarSign,
+  Camera,
+  Upload,
+  FileCheck,
+  CreditCard,
 } from 'lucide-react'
-
-const STATUS_TRANSITIONS: Record<string, { value: RentalStatus; label: string }[]> = {
-  pending: [
-    { value: 'confirmed', label: 'Potwierdź' },
-    { value: 'cancelled', label: 'Anuluj' },
-  ],
-  confirmed: [
-    { value: 'inProgress', label: 'Rozpocznij' },
-    { value: 'cancelled', label: 'Anuluj' },
-  ],
-  inProgress: [
-    { value: 'completed', label: 'Zakończ' },
-    { value: 'cancelled', label: 'Anuluj' },
-  ],
-  completed: [],
-  cancelled: [],
-}
 
 interface RentalDetailDialogProps {
   rental: Rental | null
@@ -72,10 +68,12 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
   const statusMutation = useUpdateRentalStatus()
   const deleteMutation = useDeleteRental()
   const assignmentMutation = useUpsertAssignment()
+  const updateRentalMutation = useUpdateRental()
 
   const canManage = currentUser?.role === 'admin' || currentUser?.role === 'owner'
 
-  // Local state for current rental (to update status/assignment without closing)
+  const [isUploading, setIsUploading] = useState(false)
+
   const [currentRental, setCurrentRental] = useState<Rental | null>(rental)
 
   useEffect(() => {
@@ -90,14 +88,12 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
     return emp ? `${emp.firstName} ${emp.lastName}` : '—'
   }
 
-  // Find current user's assignment for this rental
   const myAssignment = currentRental.assignedEmployees?.find(
     (a) => a.employeeId === currentUser?.id
   )
 
   const attractionCount = currentRental.attractionIds.length
 
-  // Zarobki — stawka z momentu zaznaczenia (snapshot), bez fallbacków
   const myActions = (myAssignment?.didAssembly ? 1 : 0) + (myAssignment?.didDisassembly ? 1 : 0)
   const myEarnings = attractionCount * (
     (myAssignment?.didAssembly ? (myAssignment.assemblyRateSnapshot ?? 0) : 0) +
@@ -113,28 +109,46 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
       ? !myAssignment?.didDisassembly
       : (myAssignment?.didDisassembly ?? false)
 
+    handleUpsertAssignment(currentUser.id, didAssembly, didDisassembly)
+  }
+
+  const handleAdminToggle = (employeeId: string, field: 'assembly' | 'disassembly') => {
+    const existing = currentRental.assignedEmployees?.find((a) => a.employeeId === employeeId)
+    const didAssembly = field === 'assembly'
+      ? !(existing?.didAssembly ?? false)
+      : (existing?.didAssembly ?? false)
+    const didDisassembly = field === 'disassembly'
+      ? !(existing?.didDisassembly ?? false)
+      : (existing?.didDisassembly ?? false)
+
+    handleUpsertAssignment(employeeId, didAssembly, didDisassembly)
+  }
+
+  const handleUpsertAssignment = (employeeId: string, didAssembly: boolean, didDisassembly: boolean) => {
+    const emp = users.find((u) => u.id === employeeId)
+    const existing = currentRental.assignedEmployees?.find((a) => a.employeeId === employeeId)
+
     assignmentMutation.mutate(
       {
         rentalId: currentRental.id,
-        employeeId: currentUser.id,
+        employeeId,
         didAssembly,
         didDisassembly,
-        assemblyRate: currentUser.assemblyRate ?? 0,
-        disassemblyRate: currentUser.disassemblyRate ?? 0,
+        assemblyRate: emp?.assemblyRate ?? 0,
+        disassemblyRate: emp?.disassemblyRate ?? 0,
       },
       {
         onSuccess: () => {
-          // Optimistic local update
           const updatedAssignments = [...(currentRental.assignedEmployees || [])]
-          const idx = updatedAssignments.findIndex((a) => a.employeeId === currentUser.id)
+          const idx = updatedAssignments.findIndex((a) => a.employeeId === employeeId)
           const newAssignment = {
-            employeeId: currentUser.id,
+            employeeId,
             didAssembly,
             didDisassembly,
-            assemblyTime: didAssembly ? (myAssignment?.assemblyTime ?? new Date().toISOString()) : undefined,
-            disassemblyTime: didDisassembly ? (myAssignment?.disassemblyTime ?? new Date().toISOString()) : undefined,
-            assemblyRateSnapshot: currentUser.assemblyRate ?? 0,
-            disassemblyRateSnapshot: currentUser.disassemblyRate ?? 0,
+            assemblyTime: didAssembly ? (existing?.assemblyTime ?? new Date().toISOString()) : undefined,
+            disassemblyTime: didDisassembly ? (existing?.disassemblyTime ?? new Date().toISOString()) : undefined,
+            assemblyRateSnapshot: emp?.assemblyRate ?? 0,
+            disassemblyRateSnapshot: emp?.disassemblyRate ?? 0,
           }
           if (idx >= 0) {
             updatedAssignments[idx] = newAssignment
@@ -147,10 +161,12 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
     )
   }
 
+  const assignedIds = new Set(currentRental.assignedEmployees?.map((a) => a.employeeId) ?? [])
+  const unassignedEmployees = users.filter((u) => u.isActive && !assignedIds.has(u.id) && u.id !== currentUser?.id)
+
   return (
     <Dialog open={!!rental} onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto p-0 gap-0">
-        {/* Sticky header */}
         <div className="p-6 pb-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
           <div className="flex items-center justify-between">
             <div>
@@ -200,16 +216,13 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Client info — single row */}
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             <span className="flex items-center gap-1.5"><User className="h-4 w-4 text-primary" />{currentRental.clientName}</span>
             <a href={`tel:${currentRental.clientPhone}`} className="flex items-center gap-1.5 hover:underline text-primary"><Phone className="h-4 w-4" />{currentRental.clientPhone}</a>
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentRental.address)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:underline text-primary"><MapPin className="h-4 w-4" />{currentRental.address}</a>
           </div>
 
-          {/* Two columns: Attractions + Costs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {/* Attractions */}
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 Atrakcje ({attractionCount})
@@ -229,7 +242,6 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
               </div>
             </div>
 
-            {/* Costs */}
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Koszty</h3>
               <div className="space-y-1 text-sm">
@@ -261,7 +273,6 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
             </div>
           </div>
 
-          {/* Notes */}
           {currentRental.notes && (
             <div className="text-sm">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Notatki</h3>
@@ -269,7 +280,6 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
             </div>
           )}
 
-          {/* Assembly / Disassembly tracking */}
           {currentUser && currentRental.status !== 'cancelled' && (
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
@@ -308,14 +318,13 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
                 </div>
               </div>
 
-              {/* Show all employees' work summary for admin/owner */}
-              {canManage && currentRental.assignedEmployees && currentRental.assignedEmployees.length > 0 && (
+              {canManage && (
                 <div className="space-y-2">
                   <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Status pracy wszystkich pracowników
+                    Zarządzaj pracownikami
                   </h4>
                   <div className="rounded-lg border divide-y">
-                    {currentRental.assignedEmployees.map((assignment) => {
+                    {currentRental.assignedEmployees && currentRental.assignedEmployees.map((assignment) => {
                       const emp = users.find((u) => u.id === assignment.employeeId)
                       const actions = (assignment.didAssembly ? 1 : 0) + (assignment.didDisassembly ? 1 : 0)
                       const earnings = attractionCount * (
@@ -323,37 +332,245 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
                         (assignment.didDisassembly ? (assignment.disassemblyRateSnapshot ?? 0) : 0)
                       )
                       return (
-                        <div key={assignment.employeeId} className="flex items-center justify-between p-3 text-sm">
-                          <div>
-                            <span className="font-medium">
+                        <div key={assignment.employeeId} className="p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm">
                               {emp ? `${emp.firstName} ${emp.lastName}` : 'Nieznany pracownik'}
                             </span>
-                            <div className="flex gap-2 mt-0.5">
-                              {assignment.didAssembly && (
-                                <Badge variant="secondary" className="text-xs">Rozłożył</Badge>
-                              )}
-                              {assignment.didDisassembly && (
-                                <Badge variant="secondary" className="text-xs">Złożył</Badge>
-                              )}
-                              {!assignment.didAssembly && !assignment.didDisassembly && (
-                                <span className="text-xs text-muted-foreground">Brak zaznaczonych czynności</span>
-                              )}
+                            {actions > 0 && (
+                              <span className="font-medium text-green-600 text-sm">{formatPrice(earnings)}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs">Rozłożył</Label>
+                              <Switch
+                                checked={assignment.didAssembly}
+                                onCheckedChange={() => handleAdminToggle(assignment.employeeId, 'assembly')}
+                                disabled={assignmentMutation.isPending}
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Label className="text-xs">Złożył</Label>
+                              <Switch
+                                checked={assignment.didDisassembly}
+                                onCheckedChange={() => handleAdminToggle(assignment.employeeId, 'disassembly')}
+                                disabled={assignmentMutation.isPending}
+                              />
                             </div>
                           </div>
-                          {actions > 0 && (
-                            <span className="font-medium text-green-600">{formatPrice(earnings)}</span>
-                          )}
                         </div>
                       )
                     })}
+                    {unassignedEmployees.length > 0 && (
+                      <div className="p-3">
+                        <select
+                          className="w-full text-sm rounded-md border border-input bg-background px-3 py-2 text-foreground"
+                          value=""
+                          onChange={(e) => {
+                            if (e.target.value) {
+                              handleUpsertAssignment(e.target.value, false, false)
+                            }
+                          }}
+                        >
+                          <option value="">+ Dodaj pracownika...</option>
+                          {unassignedEmployees.map((emp) => (
+                            <option key={emp.id} value={emp.id}>
+                              {emp.firstName} {emp.lastName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Status transitions - only for admin/owner */}
-          {canManage && STATUS_TRANSITIONS[currentRental.status]?.length > 0 && (
+          {currentUser && currentRental.status !== 'cancelled' && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <FileCheck className="h-4 w-4" />
+                Umowa / Kontrakt
+              </h3>
+              <div className="rounded-lg border p-4 space-y-3">
+                {currentRental.contractPhotoUrl ? (
+                  <div className="space-y-3">
+                    <a
+                      href={currentRental.contractPhotoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      <img
+                        src={currentRental.contractPhotoUrl}
+                        alt="Zdjęcie umowy"
+                        className="rounded-md border max-h-64 object-contain w-full"
+                      />
+                    </a>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <FileCheck className="h-3.5 w-3.5 text-green-600" />
+                      Umowa dodana — kliknij aby otworzyć w pełnym rozmiarze
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      disabled={isUploading || updateRentalMutation.isPending}
+                      onClick={() => {
+                        updateRentalMutation.mutate(
+                          { id: currentRental.id, updates: { contractPhotoUrl: null } },
+                          {
+                            onSuccess: () => {
+                              setCurrentRental({ ...currentRental, contractPhotoUrl: undefined, hasContract: false })
+                              toast.success('Zdjęcie umowy zostało usunięte.')
+                            },
+                          }
+                        )
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Usuń zdjęcie umowy
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Camera className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground mb-3">Brak zdjęcia umowy</p>
+                  </div>
+                )}
+                <label className="block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      if (file.size > 5 * 1024 * 1024) {
+                        toast.error('Plik jest za duży (max 5 MB)')
+                        return
+                      }
+                      setIsUploading(true)
+                      try {
+                        const fileExt = file.name.split('.').pop()
+                        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
+                        const filePath = `${currentRental.id}/${fileName}`
+
+                        const { error: uploadError } = await supabase.storage
+                          .from('contracts')
+                          .upload(filePath, file, { contentType: file.type })
+
+                        if (uploadError) throw uploadError
+
+                        const { data: urlData } = supabase.storage
+                          .from('contracts')
+                          .getPublicUrl(filePath)
+
+                        const publicUrl = urlData.publicUrl
+
+                        updateRentalMutation.mutate(
+                          { id: currentRental.id, updates: { contractPhotoUrl: publicUrl } },
+                          {
+                            onSuccess: () => {
+                              setCurrentRental({ ...currentRental, contractPhotoUrl: publicUrl, hasContract: true })
+                              toast.success('Zdjęcie umowy zostało dodane.')
+                            },
+                          }
+                        )
+                      } catch (err) {
+                        console.error(err)
+                        toast.error('Nie udało się przesłać zdjęcia.')
+                      } finally {
+                        setIsUploading(false)
+                      }
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    disabled={isUploading}
+                    onClick={(e) => {
+                      const input = (e.currentTarget.parentElement as HTMLLabelElement).querySelector('input')
+                      input?.click()
+                    }}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {isUploading ? 'Przesyłanie...' : currentRental.contractPhotoUrl ? 'Zmień zdjęcie umowy' : 'Dodaj zdjęcie umowy'}
+                  </Button>
+                </label>
+              </div>
+            </div>
+          )}
+
+          {canManage && currentRental.status !== 'cancelled' && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Płatność
+              </h3>
+              <div className="rounded-lg border p-4 space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Typ płatności</Label>
+                  <Select
+                    value={currentRental.paymentType ?? ''}
+                    onValueChange={(val) => {
+                      const paymentType = val as PaymentType
+                      updateRentalMutation.mutate(
+                        { id: currentRental.id, updates: { paymentType } },
+                        { onSuccess: () => setCurrentRental({ ...currentRental, paymentType }) }
+                      )
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-48">
+                      <SelectValue placeholder="Wybierz typ..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Gotówka</SelectItem>
+                      <SelectItem value="blik">BLIK</SelectItem>
+                      <SelectItem value="transfer">Przelew</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-wrap gap-6">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="hasInvoice"
+                      checked={currentRental.hasInvoice ?? false}
+                      onCheckedChange={(checked) => {
+                        const hasInvoice = !!checked
+                        updateRentalMutation.mutate(
+                          { id: currentRental.id, updates: { hasInvoice } },
+                          { onSuccess: () => setCurrentRental({ ...currentRental, hasInvoice }) }
+                        )
+                      }}
+                    />
+                    <Label htmlFor="hasInvoice" className="text-sm cursor-pointer">Faktura VAT (FV)</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="hasReceipt"
+                      checked={currentRental.hasReceipt ?? false}
+                      onCheckedChange={(checked) => {
+                        const hasReceipt = !!checked
+                        updateRentalMutation.mutate(
+                          { id: currentRental.id, updates: { hasReceipt } },
+                          { onSuccess: () => setCurrentRental({ ...currentRental, hasReceipt }) }
+                        )
+                      }}
+                    />
+                    <Label htmlFor="hasReceipt" className="text-sm cursor-pointer">Paragon</Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentUser && STATUS_TRANSITIONS[currentRental.status]?.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 Zmień status
@@ -387,7 +604,6 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
           )}
         </div>
 
-        {/* Action bar - only for admin/owner */}
         {canManage && onEdit && (
           <div className="p-6 border-t border-border flex flex-col sm:flex-row sm:justify-between items-center gap-3 w-full bg-background/95 backdrop-blur sticky bottom-0">
             <AlertDialog>

@@ -7,7 +7,21 @@ interface TransportSettings {
 }
 
 interface CompanySettings {
-  address: string
+  street: string
+  houseNumber: string
+  postalCode: string
+  city: string
+}
+
+export function getFullCompanyAddress(company: CompanySettings): string {
+  const parts = [
+    company.street && company.houseNumber
+      ? `${company.street} ${company.houseNumber}`
+      : company.street || company.houseNumber,
+    company.postalCode,
+    company.city,
+  ].filter(Boolean)
+  return parts.join(', ')
 }
 
 interface SettingsState {
@@ -25,7 +39,10 @@ export const useSettingsStore = create<SettingsState>()(
         freeKmThreshold: 25,
       },
       company: {
-        address: '',
+        street: '',
+        houseNumber: '',
+        postalCode: '',
+        city: '',
       },
       setTransportSettings: (settings) =>
         set((state) => ({
@@ -38,6 +55,15 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'kraina-settings',
+      merge: (persisted, current) => {
+        const p = persisted as Partial<SettingsState> | undefined
+        return {
+          ...current,
+          ...p,
+          transport: { ...(current as SettingsState).transport, ...p?.transport },
+          company: { ...(current as SettingsState).company, ...p?.company },
+        } as SettingsState
+      },
     }
   )
 )

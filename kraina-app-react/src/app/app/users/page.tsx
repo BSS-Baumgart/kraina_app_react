@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useUsers, useToggleUserStatus, useCreateUser } from '@/hooks/useUsers'
+import { useUsers, useToggleUserStatus } from '@/hooks/useUsers'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -48,22 +48,11 @@ import {
   Copy,
   Check,
 } from 'lucide-react'
-import { User, UserRole } from '@/lib/types'
+import { User } from '@/lib/types'
+import { ROLE_LABELS, ROLE_VARIANTS } from '@/lib/constants'
 import { getInitials, formatPrice } from '@/lib/utils'
 import { UserForm } from '@/components/users/UserForm'
 import { toast } from 'sonner'
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  employee: 'Pracownik',
-  admin: 'Administrator',
-  owner: 'Właściciel',
-}
-
-const ROLE_VARIANTS: Record<UserRole, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  employee: 'secondary',
-  admin: 'default',
-  owner: 'default',
-}
 
 export default function UsersPage() {
   const { users, isLoading, error } = useUsers()
@@ -79,13 +68,12 @@ export default function UsersPage() {
   const [userToEdit, setUserToEdit] = useState<User | null>(null)
   const [isCreateFormOpen, setIsCreateFormOpen] = useState(false)
 
-  // Password reset state
   const [resetLoading, setResetLoading] = useState<string | null>(null)
   const [resetLink, setResetLink] = useState<string | null>(null)
   const [resetLinkCopied, setResetLinkCopied] = useState(false)
   const [emailSending, setEmailSending] = useState<string | null>(null)
 
-  const canManageUsers = currentUser?.role === 'admin' || currentUser?.role === 'owner'
+  const canManageUsers = currentUser?.role === 'owner'
 
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
@@ -150,9 +138,12 @@ export default function UsersPage() {
     return <div className="p-4 text-destructive">Wystąpił błąd podczas ładowania użytkowników.</div>
   }
 
+  if (currentUser && currentUser.role !== 'owner') {
+    return <div className="p-4 text-destructive">Brak dostępu. Tylko właściciel może zarządzać użytkownikami.</div>
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-500">
-      {/* Action bar */}
       {canManageUsers && (
         <div className="flex justify-end">
           <Button onClick={() => setIsCreateFormOpen(true)} className="shadow-sm">
@@ -162,7 +153,6 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -196,7 +186,6 @@ export default function UsersPage() {
         </Select>
       </div>
 
-      {/* Stats summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
@@ -228,7 +217,6 @@ export default function UsersPage() {
         </Card>
       </div>
 
-      {/* Table */}
       {isLoading ? (
         <Card>
           <CardContent className="p-6 space-y-4">
@@ -353,7 +341,6 @@ export default function UsersPage() {
         </Card>
       )}
 
-      {/* User detail dialog */}
       <Dialog
         open={!!selectedUser}
         onOpenChange={(open) => {
@@ -404,7 +391,6 @@ export default function UsersPage() {
               </div>
 
               <div className="p-6 space-y-6">
-                {/* Contact info */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                     Dane kontaktowe
@@ -429,7 +415,6 @@ export default function UsersPage() {
                   </div>
                 </div>
 
-                {/* Rates */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                     Stawki
@@ -458,7 +443,6 @@ export default function UsersPage() {
                   </div>
                 </div>
 
-                {/* Meta */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                     Informacje
@@ -484,7 +468,6 @@ export default function UsersPage() {
                   </div>
                 </div>
 
-                {/* Password reset */}
                 {canManageUsers && selectedUser.email && (
                   <div className="space-y-3">
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
@@ -524,7 +507,6 @@ export default function UsersPage() {
                 )}
               </div>
 
-              {/* Admin actions */}
               {canManageUsers && (
                 <div className="p-6 border-t border-border flex flex-col sm:flex-row sm:justify-between items-center gap-3 w-full bg-background/95 backdrop-blur sticky bottom-0">
                   <Button
@@ -575,7 +557,6 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit form dialog */}
       <Dialog open={isEditFormOpen} onOpenChange={setIsEditFormOpen}>
         <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -598,7 +579,6 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create form dialog */}
       <Dialog open={isCreateFormOpen} onOpenChange={setIsCreateFormOpen}>
         <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>

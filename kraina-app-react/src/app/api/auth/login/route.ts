@@ -3,7 +3,6 @@ import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
-    // Rate limit by IP — max 5 login attempts per 60 seconds
     const forwarded = request.headers.get('x-forwarded-for')
     const ip = forwarded?.split(',')[0]?.trim() || 'unknown'
     const { allowed, remaining, resetTime } = rateLimit(`login:${ip}`, { limit: 5, windowSeconds: 60 })
