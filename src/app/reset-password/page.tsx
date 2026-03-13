@@ -31,6 +31,17 @@ export default function ResetPasswordPage() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    // Check for errors in URL hash (e.g. expired token)
+    const hash = window.location.hash.substring(1)
+    if (hash) {
+      const params = new URLSearchParams(hash)
+      const hashError = params.get('error_description')
+      if (hashError) {
+        setError(hashError.replace(/\+/g, ' '))
+        return
+      }
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setReady(true)
@@ -82,7 +93,19 @@ export default function ResetPasswordPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!ready && !success ? (
+          {error && !ready ? (
+            <div className="flex flex-col items-center gap-3 py-6">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Link do resetowania hasła jest nieprawidłowy lub wygasł. Poproś administratora o wygenerowanie nowego linku.
+                </AlertDescription>
+              </Alert>
+              <Button variant="outline" className="mt-2" onClick={() => router.push('/login')}>
+                Wróć do logowania
+              </Button>
+            </div>
+          ) : !ready && !success ? (
             <div className="flex flex-col items-center gap-3 py-6">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               <p className="text-sm text-muted-foreground">Weryfikowanie linku...</p>
