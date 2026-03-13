@@ -181,15 +181,6 @@ function LoginContent() {
               </Button>
             </form>
           </Form>
-
-          <div className="mt-6 pt-6 border-t text-center text-sm text-muted-foreground">
-            <p>Demo dane logowania:</p>
-            <p className="mt-2 font-mono text-xs bg-muted p-3 rounded">
-              email: demo@example.com
-              <br />
-              password: demo123456
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
