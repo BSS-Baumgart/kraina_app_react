@@ -37,8 +37,8 @@ export async function POST(
     const body = await request.json().catch(() => ({}))
     const sendEmail = body.sendEmail === true
 
-    const origin = request.headers.get('origin') || request.headers.get('referer')?.replace(/\/[^/]*$/, '') || ''
-    const redirectTo = `${origin}/reset-password`
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || request.headers.get('origin') || ''
+    const redirectTo = `${siteUrl}/auth/callback?next=/reset-password`
 
     if (sendEmail) {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(user.email, {
