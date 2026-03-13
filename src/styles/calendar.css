@@ -316,47 +316,92 @@
 
 /* ===== Mobile responsive ===== */
 @media (max-width: 640px) {
+  .rbc-calendar {
+    font-size: 12px;
+  }
+
   .rbc-month-row {
-    min-height: 72px;
+    min-height: 64px;
   }
 
   .rbc-row-content {
-    padding: 0.2rem 0.1rem 0.3rem 0.1rem;
+    padding: 0.15rem 0.1rem 0.2rem 0.1rem;
+    min-height: 50px;
   }
 
   .rbc-date-cell {
-    padding: 0.2rem 0.3rem 0 0.2rem;
+    padding: 0.15rem 0.2rem 0 0.15rem;
     font-size: 11px;
   }
 
   .rbc-date-cell.rbc-now > a {
-    min-width: 1.35rem;
-    height: 1.35rem;
-    font-size: 11px;
-    border-radius: 0.35rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    font-size: 10px;
+    border-radius: 0.3rem;
+    padding: 0 0.3rem;
   }
 
   .rbc-header {
-    padding: 0.4rem 0.2rem;
-    font-size: 10px;
+    padding: 0.35rem 0.15rem;
+    font-size: 9px;
+    letter-spacing: 0.02em;
   }
 
   .rbc-row-segment {
-    padding: 1px 4px 1px 2px;
+    padding: 1px 2px 1px 1px;
   }
 
   .rbc-event {
-    font-size: 10px;
+    font-size: 9px;
     padding: 1px 3px;
+    border-radius: 3px;
+    min-height: 18px;
+  }
+
+  .rbc-event-content {
+    line-height: 1.2;
   }
 
   .rbc-show-more {
-    font-size: 10px;
+    font-size: 9px;
+    padding: 0 0.2rem;
   }
 
   .rbc-agenda-table td,
   .rbc-agenda-table th {
+    padding: 0.35rem 0.4rem;
+    font-size: 11px;
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table thead > tr > th {
     padding: 0.4rem 0.5rem;
+    font-size: 10px;
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+    padding: 0.5rem 0.4rem;
+  }
+
+  .rbc-agenda-date-cell,
+  .rbc-agenda-time-cell {
+    font-size: 11px;
+    padding: 0.5rem 0.4rem;
+    white-space: nowrap;
+  }
+
+  .rbc-agenda-event-cell {
     font-size: 12px;
+    padding: 0.5rem 0.4rem;
+  }
+
+  .rbc-overlay {
+    max-width: calc(100vw - 2rem);
+    font-size: 12px;
+  }
+
+  /* Better touch targets for events */
+  .rbc-event {
+    min-height: 20px;
   }
 }

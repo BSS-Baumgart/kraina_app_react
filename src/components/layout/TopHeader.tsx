@@ -33,27 +33,27 @@ export function TopHeader() {
 
   return (
     <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-sm border-b border-border">
-      <div className="px-5 h-16 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 min-w-0">
-          <SidebarTrigger className="h-10 w-10 [&>svg]:size-6" />
+      <div className="px-3 sm:px-5 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <SidebarTrigger className="h-9 w-9 sm:h-10 sm:w-10 [&>svg]:size-5 sm:[&>svg]:size-6" />
           <div className="flex flex-col min-w-0">
-            <span className="text-2xl font-bold text-foreground truncate tracking-tight">{meta.title}</span>
+            <span className="text-lg sm:text-2xl font-bold text-foreground truncate tracking-tight">{meta.title}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <ModeToggle className="h-10 w-10" />
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <ModeToggle className="h-9 w-9 sm:h-10 sm:w-10" />
           <div className="hidden sm:flex flex-col text-right mr-2">
             <span className="text-sm font-semibold text-foreground leading-snug">{user?.fullName}</span>
             <span className="text-sm text-muted-foreground leading-snug">
               {user?.role === 'owner' ? 'Właściciel' : user?.role === 'admin' ? 'Administrator' : 'Pracownik'}
             </span>
           </div>
-          <Avatar className="h-10 w-10 cursor-pointer" onClick={() => router.push('/app/profile')}>
-            <AvatarFallback className="bg-primary/15 text-primary text-sm font-bold">{initials}</AvatarFallback>
+          <Avatar className="h-9 w-9 sm:h-10 sm:w-10 cursor-pointer" onClick={() => router.push('/app/profile')}>
+            <AvatarFallback className="bg-primary/15 text-primary text-xs sm:text-sm font-bold">{initials}</AvatarFallback>
           </Avatar>
-          <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleLogout} title="Wyloguj">
-            <LogOut className="h-5 w-5" />
+          <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" onClick={handleLogout} title="Wyloguj">
+            <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         </div>
       </div>

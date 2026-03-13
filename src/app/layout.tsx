@@ -48,8 +48,12 @@ export default function RootLayout({
           </TooltipProvider>
           <Toaster position="bottom-right" expand={true} />
         </ThemeProvider>
-        <Analytics />
-        <SpeedInsights />
+        {process.env.NODE_ENV === 'production' && (
+          <>
+            <Analytics />
+            <SpeedInsights />
+          </>
+        )}
       </body>
     </html>
   );

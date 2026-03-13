@@ -15,10 +15,10 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -165,13 +165,13 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
   const unassignedEmployees = users.filter((u) => u.isActive && !assignedIds.has(u.id) && u.id !== currentUser?.id)
 
   return (
-    <Dialog open={!!rental} onOpenChange={(open) => { if (!open) onClose() }}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto p-0 gap-0">
-        <div className="p-6 pb-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
-          <div className="flex items-center justify-between">
-            <div>
-              <DialogTitle className="text-xl font-bold">{currentRental.clientName}</DialogTitle>
-              <div className="flex items-center gap-2 mt-1">
+    <ResponsiveDialog open={!!rental} onOpenChange={(open) => { if (!open) onClose() }}>
+      <ResponsiveDialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+        <div className="p-4 sm:p-6 pb-3 sm:pb-4 border-b border-border sticky top-0 bg-background/95 backdrop-blur z-10">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <ResponsiveDialogTitle className="text-lg sm:text-xl font-bold truncate">{currentRental.clientName}</ResponsiveDialogTitle>
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
                 <Badge
                   style={{
                     backgroundColor: `${STATUS_COLORS[currentRental.status]}20`,
@@ -182,31 +182,30 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
                 >
                   {STATUS_DISPLAY[currentRental.status]}
                 </Badge>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-xs sm:text-sm text-muted-foreground">
                   {new Date(currentRental.date + 'T00:00:00').toLocaleDateString('pl-PL', {
-                    weekday: 'long',
+                    weekday: 'short',
                     day: 'numeric',
                     month: 'long',
-                    year: 'numeric',
                   })}
                 </span>
-                <span className="text-sm text-muted-foreground">·</span>
-                <span className="text-sm text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline text-sm text-muted-foreground">·</span>
+                <span className="text-xs sm:text-sm text-muted-foreground flex items-center gap-1">
+                  <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                   {currentRental.setupTime} – {currentRental.teardownTime}
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               {currentRental.createdById && (
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="hidden sm:flex text-xs text-muted-foreground items-center gap-1">
                   <User className="h-3 w-3" />{getEmployeeName(currentRental.createdById)}
                 </span>
               )}
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 rounded-full border border-border bg-background"
+                className="h-9 w-9 sm:h-8 sm:w-8 rounded-full border border-border bg-background"
                 onClick={onClose}
               >
                 <X className="h-4 w-4" />
@@ -215,8 +214,8 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
           </div>
         </div>
 
-        <div className="p-6 space-y-5">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-5 gap-y-1 text-sm">
             <span className="flex items-center gap-1.5"><User className="h-4 w-4 text-primary" />{currentRental.clientName}</span>
             <a href={`tel:${currentRental.clientPhone}`} className="flex items-center gap-1.5 hover:underline text-primary"><Phone className="h-4 w-4" />{currentRental.clientPhone}</a>
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(currentRental.address)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 hover:underline text-primary"><MapPin className="h-4 w-4" />{currentRental.address}</a>
@@ -605,7 +604,7 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
         </div>
 
         {canManage && onEdit && (
-          <div className="p-6 border-t border-border flex flex-col sm:flex-row sm:justify-between items-center gap-3 w-full bg-background/95 backdrop-blur sticky bottom-0">
+          <div className="p-4 sm:p-6 border-t border-border flex flex-col sm:flex-row sm:justify-between items-stretch sm:items-center gap-3 w-full bg-background/95 backdrop-blur sticky bottom-0">
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
@@ -649,7 +648,7 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
             </Button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

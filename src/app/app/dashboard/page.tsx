@@ -206,13 +206,13 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
             {getGreeting()}, {currentUser?.firstName || 'Użytkowniku'}! 👋
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-0.5 sm:mt-1">
             {todayRentals.length > 0
               ? `Masz ${todayRentals.length} ${todayRentals.length === 1 ? 'rezerwację' : todayRentals.length < 5 ? 'rezerwacje' : 'rezerwacji'} na dziś`
               : 'Brak rezerwacji na dziś'}
@@ -230,19 +230,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-        <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/calendar')}>
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[88px] sm:h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/calendar')}>
           <CardHeader className="flex flex-row items-center justify-between px-3 pb-0 pt-0">
             <CardTitle className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Dziś</CardTitle>
             <CalendarDays className="h-3 w-3 text-muted-foreground/60" />
           </CardHeader>
           <CardContent className="px-3 pt-1 pb-0">
-            <p className="text-xl font-bold tracking-tight">{todayRentals.length}</p>
+            <p className="text-lg sm:text-xl font-bold tracking-tight">{todayRentals.length}</p>
             <p className="text-[9px] text-muted-foreground">jutro: {tomorrowRentals.length}</p>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => {
+        <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[88px] sm:h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => {
           const now = new Date()
           const y = now.getFullYear()
           const m = String(now.getMonth() + 1).padStart(2, '0')
@@ -260,7 +260,7 @@ export default function DashboardPage() {
         </Card>
 
         {canManage && (
-          <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/statistics/revenue')}>
+          <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[88px] sm:h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/statistics/revenue')}>
             <CardHeader className="flex flex-row items-center justify-between px-3 pb-0 pt-0">
               <CardTitle className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Przychód</CardTitle>
               <DollarSign className="h-3 w-3 text-muted-foreground/60" />
@@ -282,7 +282,7 @@ export default function DashboardPage() {
         )}
 
         {canManage && (
-          <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/statistics/costs')}>
+          <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[88px] sm:h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/statistics/costs')}>
             <CardHeader className="flex flex-row items-center justify-between px-3 pb-0 pt-0">
               <CardTitle className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Zysk</CardTitle>
               <TrendingUp className="h-3 w-3 text-muted-foreground/60" />
@@ -297,7 +297,7 @@ export default function DashboardPage() {
         )}
 
         {isEmployee && (
-          <Card className="h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30">
+          <Card className="h-[88px] sm:h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30">
             <CardHeader className="flex flex-row items-center justify-between px-3 pb-0 pt-0">
               <CardTitle className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Zadania</CardTitle>
               <Zap className="h-3 w-3 text-muted-foreground/60" />
@@ -309,7 +309,7 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/clients')}>
+        <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[88px] sm:h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/clients')}>
           <CardHeader className="flex flex-row items-center justify-between px-3 pb-0 pt-0">
             <CardTitle className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Klienci</CardTitle>
             <UserCheck className="h-3 w-3 text-muted-foreground/60" />
@@ -319,7 +319,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/attractions')}>
+        <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[88px] sm:h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/attractions')}>
           <CardHeader className="flex flex-row items-center justify-between px-3 pb-0 pt-0">
             <CardTitle className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Atrakcje</CardTitle>
             <Zap className="h-3 w-3 text-muted-foreground/60" />
@@ -331,7 +331,7 @@ export default function DashboardPage() {
         </Card>
 
         {canManage && (
-          <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/users')}>
+          <Card className="cursor-pointer hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 h-[88px] sm:h-[100px] flex flex-col justify-center border-border/40 bg-gradient-to-b from-card to-muted/30" onClick={() => router.push('/app/users')}>
             <CardHeader className="flex flex-row items-center justify-between px-3 pb-0 pt-0">
               <CardTitle className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Pracownicy</CardTitle>
               <Users className="h-3 w-3 text-muted-foreground/60" />

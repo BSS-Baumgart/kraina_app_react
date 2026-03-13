@@ -36,8 +36,8 @@ export function MainShell({ children }: MainShellProps) {
       <SidebarInset className="flex flex-col overflow-hidden">
         <TopHeader />
         <div className="flex-1 overflow-auto bg-background">
-          <div className="px-3 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-8">
-            <div className="mb-4">
+          <div className="px-3 py-3 sm:px-5 sm:py-5 lg:px-8 lg:py-8">
+            <div className="mb-2 sm:mb-4">
               <AppBreadcrumb />
             </div>
             {children}

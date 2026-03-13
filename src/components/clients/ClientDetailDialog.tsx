@@ -5,11 +5,11 @@ import { Client, Rental } from '@/lib/types'
 import { Attraction } from '@/lib/types'
 import { useUpdateClient } from '@/hooks/useClients'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -134,17 +134,17 @@ export function ClientDetailDialog({
     })
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent showCloseButton={false} className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col p-0 top-[10vh] translate-y-0">
-        <DialogHeader className="sr-only">
-          <DialogTitle>{client.name}</DialogTitle>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <ResponsiveDialogContent showCloseButton={false} className="sm:max-w-[900px] max-h-[80vh] overflow-hidden flex flex-col p-0 sm:top-[10vh] sm:translate-y-0">
+        <ResponsiveDialogHeader className="sr-only">
+          <ResponsiveDialogTitle>{client.name}</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
 
-        <div className="shrink-0 bg-card border-b px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold">{client.name}</h2>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm">
+        <div className="shrink-0 bg-card border-b px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold truncate">{client.name}</h2>
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-4 gap-y-0.5 mt-1 text-sm">
                 <a href={`tel:${client.phone}`} className="flex items-center gap-1.5 hover:underline text-primary">
                   <Phone className="h-3.5 w-3.5" />{client.phone}
                 </a>
@@ -165,30 +165,32 @@ export function ClientDetailDialog({
                 )}
               </div>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full border border-border bg-background" onClick={onClose}>
+            <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8 rounded-full border border-border bg-background shrink-0" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         <Tabs defaultValue="overview" className="flex flex-col min-h-0 flex-1">
-          <div className="shrink-0 px-6 pt-4 pb-0">
-            <TabsList className="mb-0">
-              <TabsTrigger value="overview" className="gap-1.5">
+          <div className="shrink-0 px-4 sm:px-6 pt-3 sm:pt-4 pb-0">
+            <TabsList className="mb-0 w-full sm:w-auto">
+              <TabsTrigger value="overview" className="gap-1.5 flex-1 sm:flex-initial">
                 <TrendingUp className="h-3.5 w-3.5" />
-                Podsumowanie
+                <span className="hidden sm:inline">Podsumowanie</span>
+                <span className="sm:hidden">Info</span>
               </TabsTrigger>
-              <TabsTrigger value="rentals" className="gap-1.5">
+              <TabsTrigger value="rentals" className="gap-1.5 flex-1 sm:flex-initial">
                 <ClipboardList className="h-3.5 w-3.5" />
-                Rezerwacje ({stats.total})
+                <span className="hidden sm:inline">Rezerwacje ({stats.total})</span>
+                <span className="sm:hidden">Rez. ({stats.total})</span>
               </TabsTrigger>
-              <TabsTrigger value="info" className="gap-1.5">
+              <TabsTrigger value="info" className="gap-1.5 flex-1 sm:flex-initial">
                 <FileText className="h-3.5 w-3.5" />
                 Dane
               </TabsTrigger>
             </TabsList>
           </div>
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-3 sm:py-4">
 
             <TabsContent value="overview" className="space-y-5">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -261,7 +263,7 @@ export function ClientDetailDialog({
               {clientRentals.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">Brak rezerwacji dla tego klienta.</p>
               ) : (
-                <div className="rounded-lg border overflow-hidden">
+                <div className="rounded-lg border overflow-hidden overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -402,7 +404,7 @@ export function ClientDetailDialog({
             </TabsContent>
           </div>
         </Tabs>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

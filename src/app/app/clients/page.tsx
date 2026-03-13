@@ -23,11 +23,13 @@ import {
   DollarSign,
   ClipboardList,
   TrendingUp,
+  ChevronRight,
 } from 'lucide-react'
 import { Client, Rental } from '@/lib/types'
 import { formatPrice } from '@/lib/utils'
 import { ClientDetailDialog } from '@/components/clients/ClientDetailDialog'
 import { RentalDetailDialog } from '@/components/rentals/RentalDetailDialog'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export default function ClientsPage() {
   const { clients, isLoading, error } = useClients()
@@ -37,6 +39,7 @@ export default function ClientsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
+  const isMobile = useIsMobile()
 
   const clientStats = useMemo(() => {
     const map = new Map<string, { rentalCount: number; completedCount: number; totalRevenue: number; lastDate: string | null }>()
@@ -93,48 +96,48 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-500">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-full bg-primary/10 p-2">
-              <Users className="h-5 w-5 text-primary" />
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="rounded-full bg-primary/10 p-1.5 sm:p-2">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-10" /> : globalStats.totalClients}</div>
-              <div className="text-xs text-muted-foreground">Klientów</div>
+              <div className="text-lg sm:text-2xl font-bold">{isLoading ? <Skeleton className="h-6 sm:h-7 w-8 sm:w-10" /> : globalStats.totalClients}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">Klientów</div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-full bg-green-500/10 p-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="rounded-full bg-green-500/10 p-1.5 sm:p-2">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
             </div>
             <div>
-              <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-10" /> : globalStats.returning}</div>
-              <div className="text-xs text-muted-foreground">Powracających</div>
+              <div className="text-lg sm:text-2xl font-bold">{isLoading ? <Skeleton className="h-6 sm:h-7 w-8 sm:w-10" /> : globalStats.returning}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">Powracających</div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-full bg-blue-500/10 p-2">
-              <ClipboardList className="h-5 w-5 text-blue-500" />
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="rounded-full bg-blue-500/10 p-1.5 sm:p-2">
+              <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
             </div>
             <div>
-              <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-10" /> : globalStats.totalRentals}</div>
-              <div className="text-xs text-muted-foreground">Rezerwacji</div>
+              <div className="text-lg sm:text-2xl font-bold">{isLoading ? <Skeleton className="h-6 sm:h-7 w-8 sm:w-10" /> : globalStats.totalRentals}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">Rezerwacji</div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-full bg-yellow-500/10 p-2">
-              <DollarSign className="h-5 w-5 text-yellow-500" />
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="rounded-full bg-yellow-500/10 p-1.5 sm:p-2">
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
             </div>
             <div>
-              <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-10" /> : formatPrice(globalStats.totalRevenue)}</div>
-              <div className="text-xs text-muted-foreground">Przychód łączny</div>
+              <div className="text-lg sm:text-2xl font-bold">{isLoading ? <Skeleton className="h-6 sm:h-7 w-8 sm:w-10" /> : formatPrice(globalStats.totalRevenue)}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">Przychód łączny</div>
             </div>
           </CardContent>
         </Card>
@@ -162,7 +165,60 @@ export default function ClientsPage() {
         <div className="text-center py-12 text-muted-foreground">
           {searchQuery ? 'Brak wyników dla podanego wyszukiwania.' : 'Brak klientów w systemie.'}
         </div>
+      ) : isMobile ? (
+        /* ===== Mobile: card list ===== */
+        <div className="space-y-2.5">
+          {filteredClients.map((client) => {
+            const s = clientStats.get(client.id)
+            return (
+              <Card
+                key={client.id}
+                className="cursor-pointer active:bg-muted/50 transition-colors"
+                onClick={() => setSelectedClient(client)}
+              >
+                <CardContent className="p-3">
+                  {/* Header row */}
+                  <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                    <span className="font-semibold text-sm truncate">{client.name}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </div>
+                  {/* Key-value rows */}
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Telefon</span>
+                      <a
+                        href={`tel:${client.phone}`}
+                        className="flex items-center gap-1 text-primary font-medium"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Phone className="h-3 w-3" />
+                        {client.phone}
+                      </a>
+                    </div>
+                    {client.address && (
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-muted-foreground shrink-0">Adres</span>
+                        <span className="text-right truncate">{client.address}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Rezerwacje</span>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        {s?.rentalCount ?? 0}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Przychód</span>
+                      <span className="font-semibold">{formatPrice(s?.totalRevenue ?? 0)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
       ) : (
+        /* ===== Desktop: table ===== */
         <Card>
           <CardContent className="p-0">
             <Table>

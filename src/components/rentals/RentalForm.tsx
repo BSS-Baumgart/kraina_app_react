@@ -226,14 +226,14 @@ export function RentalForm({ rentalToEdit, initialDate, onSuccess, onCancel }: R
   return (
     <Form {...form}>
       <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
-        <div className="flex items-center justify-between gap-2 mb-6">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2 mb-4 sm:mb-6">
           {STEPS.map((s, i) => {
             const Icon = s.icon
             return (
               <button
                 key={i}
                 type="button"
-                className={`flex items-center gap-2 flex-1 justify-center py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 sm:gap-2 flex-1 justify-center py-2 px-2 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                   i === step
                     ? 'bg-primary text-primary-foreground'
                     : i < step

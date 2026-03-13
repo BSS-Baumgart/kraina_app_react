@@ -44,6 +44,7 @@ import {
   X,
 } from 'lucide-react'
 import type { Rental, EmployeeAssignment } from '@/lib/types'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface EmployeePayrollRow {
   employeeId: string
@@ -75,6 +76,7 @@ export default function PayrollPage() {
   const { user: currentUser } = useAuth()
 
   const isManager = currentUser?.role === 'admin' || currentUser?.role === 'owner'
+  const isMobile = useIsMobile()
 
   const [dateFrom, setDateFrom] = useState(() => {
     const d = new Date()
@@ -312,45 +314,45 @@ export default function PayrollPage() {
         </span>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
+          <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">
               {isManager ? 'Do wypłaty łącznie' : 'Zarobione łącznie'}
             </CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
+            <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatPrice(summary.totalToPay)}</div>
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <div className="text-lg sm:text-2xl font-bold">{formatPrice(summary.totalToPay)}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Montaże</CardTitle>
-            <Wrench className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Montaże</CardTitle>
+            <Wrench className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.totalAssemblies}</div>
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <div className="text-lg sm:text-2xl font-bold">{summary.totalAssemblies}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Demontaże</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">Demontaże</CardTitle>
+            <Package className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.totalDisassemblies}</div>
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <div className="text-lg sm:text-2xl font-bold">{summary.totalDisassemblies}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              {isManager ? 'Rezerwacje z pracownikami' : 'Moje rezerwacje'}
+          <CardHeader className="flex flex-row items-center justify-between p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium">
+              {isManager ? 'Rez. z pracownikami' : 'Moje rezerwacje'}
             </CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            <CalendarDays className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.totalRentals}</div>
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <div className="text-lg sm:text-2xl font-bold">{summary.totalRentals}</div>
           </CardContent>
         </Card>
       </div>
@@ -431,151 +433,288 @@ export default function PayrollPage() {
       )}
 
       {displayedPayroll.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>
+        isMobile ? (
+          /* ===== Mobile: card list ===== */
+          <div className="space-y-2.5">
+            <h3 className="text-sm font-semibold">
               {isManager
                 ? selectedDay
                   ? `Wypłaty — ${formatDateLabel(selectedDay)}`
                   : 'Wypłaty pracowników'
                 : 'Moje zlecenia'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {isManager && <TableHead className="w-8"></TableHead>}
-                  {isManager && <TableHead>Pracownik</TableHead>}
-                  {!isManager && <TableHead>Data</TableHead>}
-                  {!isManager && <TableHead>Klient</TableHead>}
-                  {!isManager && <TableHead>Atrakcje</TableHead>}
-                  <TableHead className="text-center">Montaż</TableHead>
-                  <TableHead className="text-center">Demontaż</TableHead>
-                  {isManager && <TableHead className="text-center">Rezerwacje</TableHead>}
-                  <TableHead className="text-right">Kwota</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isManager
-                  ? displayedPayroll.map((row) => (
-                      <Fragment key={row.employeeId}>
-                        <TableRow
-                          key={row.employeeId}
-                          className="cursor-pointer hover:bg-muted/50"
-                          onClick={() => toggleExpand(row.employeeId)}
-                        >
-                          <TableCell>
-                            {expandedEmployee === row.employeeId ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </TableCell>
-                          <TableCell className="font-medium">{row.employeeName}</TableCell>
-                          <TableCell className="text-center">{row.assemblyCount}</TableCell>
-                          <TableCell className="text-center">{row.disassemblyCount}</TableCell>
-                          <TableCell className="text-center">{row.rentalCount}</TableCell>
-                          <TableCell className="text-right font-bold">
-                            {formatPrice(row.totalEarnings)}
-                          </TableCell>
-                        </TableRow>
-                        {expandedEmployee === row.employeeId &&
-                          row.details.map((d) => (
-                            <TableRow
-                              key={`${row.employeeId}-${d.rentalId}`}
-                              className="bg-muted/30"
-                            >
-                              <TableCell />
-                              <TableCell>
-                                <div className="pl-4 space-y-1">
-                                  <div className="text-sm font-medium">
-                                    {formatDateLabel(d.date)}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {d.clientName}
-                                  </div>
-                                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                    <MapPin className="h-3 w-3" />
-                                    {d.address}
-                                  </div>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {d.attractionNames.map((name, i) => (
-                                      <Badge key={i} variant="outline" className="text-xs">
-                                        {name}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                {d.didAssembly ? (
-                                  <Badge variant="default" className="bg-green-600 text-xs">
-                                    ✓ {formatPrice(d.assemblyEarnings)}
+            </h3>
+            {isManager
+              ? displayedPayroll.map((row) => (
+                  <Card key={row.employeeId}>
+                    <CardContent className="p-3">
+                      {/* Header */}
+                      <div
+                        className="flex items-center justify-between mb-2 pb-2 border-b cursor-pointer"
+                        onClick={() => toggleExpand(row.employeeId)}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          {expandedEmployee === row.employeeId ? (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="font-semibold text-sm">{row.employeeName}</span>
+                        </div>
+                        <span className="font-bold text-sm">{formatPrice(row.totalEarnings)}</span>
+                      </div>
+                      {/* Key-value rows */}
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Montaże</span>
+                          <span>{row.assemblyCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Demontaże</span>
+                          <span>{row.disassemblyCount}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Rezerwacje</span>
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                            {row.rentalCount}
+                          </Badge>
+                        </div>
+                      </div>
+                      {/* Expanded details */}
+                      {expandedEmployee === row.employeeId && row.details.length > 0 && (
+                        <div className="mt-3 pt-2 border-t space-y-2">
+                          {row.details.map((d) => (
+                            <div key={d.rentalId} className="bg-muted/30 rounded-md p-2 space-y-1 text-xs">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{formatDateLabel(d.date)}</span>
+                                <span className="font-semibold">{formatPrice(d.totalEarnings)}</span>
+                              </div>
+                              <div className="text-muted-foreground">{d.clientName}</div>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <MapPin className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{d.address}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {d.attractionNames.map((name, i) => (
+                                  <Badge key={i} variant="outline" className="text-[10px]">
+                                    {name}
                                   </Badge>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                {d.didDisassembly ? (
-                                  <Badge variant="default" className="bg-blue-600 text-xs">
-                                    ✓ {formatPrice(d.disassemblyEarnings)}
+                                ))}
+                              </div>
+                              <div className="flex items-center gap-2 pt-1">
+                                {d.didAssembly && (
+                                  <Badge variant="default" className="bg-green-600 text-[10px]">
+                                    M: {formatPrice(d.assemblyEarnings)}
                                   </Badge>
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">—</span>
                                 )}
-                              </TableCell>
-                              <TableCell />
-                              <TableCell className="text-right text-sm">
-                                {formatPrice(d.totalEarnings)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </Fragment>
-                    ))
-                  : displayedPayroll.flatMap((row) =>
-                      row.details.map((d) => (
-                        <TableRow key={d.rentalId}>
-                          <TableCell>{formatDateLabel(d.date)}</TableCell>
-                          <TableCell>{d.clientName}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              {d.attractionNames.map((name, i) => (
-                                <Badge key={i} variant="outline" className="text-xs">
-                                  {name}
-                                </Badge>
-                              ))}
+                                {d.didDisassembly && (
+                                  <Badge variant="default" className="bg-blue-600 text-[10px]">
+                                    D: {formatPrice(d.disassemblyEarnings)}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
-                          </TableCell>
-                          <TableCell className="text-center">
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              : displayedPayroll.flatMap((row) =>
+                  row.details.map((d) => (
+                    <Card key={d.rentalId}>
+                      <CardContent className="p-3">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                          <span className="font-semibold text-sm">{formatDateLabel(d.date)}</span>
+                          <span className="font-bold text-sm">{formatPrice(d.totalEarnings)}</span>
+                        </div>
+                        {/* Key-value rows */}
+                        <div className="space-y-1.5 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Klient</span>
+                            <span className="font-medium">{d.clientName}</span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 justify-end">
+                            {d.attractionNames.map((name, i) => (
+                              <Badge key={i} variant="outline" className="text-[10px]">
+                                {name}
+                              </Badge>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Montaż</span>
                             {d.didAssembly ? (
-                              <Badge variant="default" className="bg-green-600 text-xs">
+                              <Badge variant="default" className="bg-green-600 text-[10px]">
                                 ✓ {formatPrice(d.assemblyEarnings)}
                               </Badge>
                             ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
+                              <span className="text-muted-foreground">—</span>
                             )}
-                          </TableCell>
-                          <TableCell className="text-center">
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Demontaż</span>
                             {d.didDisassembly ? (
-                              <Badge variant="default" className="bg-blue-600 text-xs">
+                              <Badge variant="default" className="bg-blue-600 text-[10px]">
                                 ✓ {formatPrice(d.disassemblyEarnings)}
                               </Badge>
                             ) : (
-                              <span className="text-muted-foreground text-xs">—</span>
+                              <span className="text-muted-foreground">—</span>
                             )}
-                          </TableCell>
-                          <TableCell className="text-right font-bold">
-                            {formatPrice(d.totalEarnings)}
-                          </TableCell>
-                        </TableRow>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+          </div>
+        ) : (
+          /* ===== Desktop: table ===== */
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {isManager
+                  ? selectedDay
+                    ? `Wypłaty — ${formatDateLabel(selectedDay)}`
+                    : 'Wypłaty pracowników'
+                  : 'Moje zlecenia'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {isManager && <TableHead className="w-8"></TableHead>}
+                    {isManager && <TableHead>Pracownik</TableHead>}
+                    {!isManager && <TableHead>Data</TableHead>}
+                    {!isManager && <TableHead>Klient</TableHead>}
+                    {!isManager && <TableHead>Atrakcje</TableHead>}
+                    <TableHead className="text-center">Montaż</TableHead>
+                    <TableHead className="text-center">Demontaż</TableHead>
+                    {isManager && <TableHead className="text-center">Rezerwacje</TableHead>}
+                    <TableHead className="text-right">Kwota</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isManager
+                    ? displayedPayroll.map((row) => (
+                        <Fragment key={row.employeeId}>
+                          <TableRow
+                            key={row.employeeId}
+                            className="cursor-pointer hover:bg-muted/50"
+                            onClick={() => toggleExpand(row.employeeId)}
+                          >
+                            <TableCell>
+                              {expandedEmployee === row.employeeId ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </TableCell>
+                            <TableCell className="font-medium">{row.employeeName}</TableCell>
+                            <TableCell className="text-center">{row.assemblyCount}</TableCell>
+                            <TableCell className="text-center">{row.disassemblyCount}</TableCell>
+                            <TableCell className="text-center">{row.rentalCount}</TableCell>
+                            <TableCell className="text-right font-bold">
+                              {formatPrice(row.totalEarnings)}
+                            </TableCell>
+                          </TableRow>
+                          {expandedEmployee === row.employeeId &&
+                            row.details.map((d) => (
+                              <TableRow
+                                key={`${row.employeeId}-${d.rentalId}`}
+                                className="bg-muted/30"
+                              >
+                                <TableCell />
+                                <TableCell>
+                                  <div className="pl-4 space-y-1">
+                                    <div className="text-sm font-medium">
+                                      {formatDateLabel(d.date)}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {d.clientName}
+                                    </div>
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                      <MapPin className="h-3 w-3" />
+                                      {d.address}
+                                    </div>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {d.attractionNames.map((name, i) => (
+                                        <Badge key={i} variant="outline" className="text-xs">
+                                          {name}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {d.didAssembly ? (
+                                    <Badge variant="default" className="bg-green-600 text-xs">
+                                      ✓ {formatPrice(d.assemblyEarnings)}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-muted-foreground text-xs">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell className="text-center">
+                                  {d.didDisassembly ? (
+                                    <Badge variant="default" className="bg-blue-600 text-xs">
+                                      ✓ {formatPrice(d.disassemblyEarnings)}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-muted-foreground text-xs">—</span>
+                                  )}
+                                </TableCell>
+                                <TableCell />
+                                <TableCell className="text-right text-sm">
+                                  {formatPrice(d.totalEarnings)}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </Fragment>
                       ))
-                    )}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                    : displayedPayroll.flatMap((row) =>
+                        row.details.map((d) => (
+                          <TableRow key={d.rentalId}>
+                            <TableCell>{formatDateLabel(d.date)}</TableCell>
+                            <TableCell>{d.clientName}</TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {d.attractionNames.map((name, i) => (
+                                  <Badge key={i} variant="outline" className="text-xs">
+                                    {name}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {d.didAssembly ? (
+                                <Badge variant="default" className="bg-green-600 text-xs">
+                                  ✓ {formatPrice(d.assemblyEarnings)}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {d.didDisassembly ? (
+                                <Badge variant="default" className="bg-blue-600 text-xs">
+                                  ✓ {formatPrice(d.disassemblyEarnings)}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-xs">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right font-bold">
+                              {formatPrice(d.totalEarnings)}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )
       ) : (
         <div className="text-center py-12 text-muted-foreground">
           Brak danych w wybranym okresie.
