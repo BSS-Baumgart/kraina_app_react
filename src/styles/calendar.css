@@ -374,6 +374,27 @@
     font-size: 11px;
   }
 
+  .rbc-agenda-view table.rbc-agenda-table thead > tr > th {
+    padding: 0.4rem 0.5rem;
+    font-size: 10px;
+  }
+
+  .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+    padding: 0.5rem 0.4rem;
+  }
+
+  .rbc-agenda-date-cell,
+  .rbc-agenda-time-cell {
+    font-size: 11px;
+    padding: 0.5rem 0.4rem;
+    white-space: nowrap;
+  }
+
+  .rbc-agenda-event-cell {
+    font-size: 12px;
+    padding: 0.5rem 0.4rem;
+  }
+
   .rbc-overlay {
     max-width: calc(100vw - 2rem);
     font-size: 12px;

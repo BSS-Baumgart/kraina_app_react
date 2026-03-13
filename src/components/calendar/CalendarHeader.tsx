@@ -37,7 +37,7 @@ export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
   const todayMonth = today.toLocaleDateString('pl-PL', { month: 'short' }).toUpperCase()
 
   return (
-    <div className="flex items-center gap-2 border-b bg-background px-3 py-2 sm:px-4 sm:py-2.5">
+    <div className="flex flex-wrap items-center gap-2 border-b bg-background px-3 py-2 sm:px-4 sm:py-2.5">
       <button
         onClick={handleToday}
         className="flex shrink-0 w-10 flex-col items-start overflow-hidden rounded-md border hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -49,12 +49,12 @@ export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
       </button>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-sm font-semibold capitalize sm:text-base truncate">
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm font-semibold capitalize sm:text-base">
             {monthName} {year}
           </span>
           <Badge variant="outline" className="px-1 text-xs shrink-0">
-            {eventCount} {eventCount === 1 ? 'rez.' : 'rez.'}
+            {eventCount} rez.
           </Badge>
         </div>
         <p className="hidden text-xs text-muted-foreground truncate sm:block">
@@ -62,48 +62,52 @@ export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
         </p>
       </div>
 
-      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8 shrink-0" onClick={handlePreviousDate}>
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
-      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8 shrink-0" onClick={handleNextDate}>
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-
-      <div className="inline-flex shrink-0 overflow-hidden rounded-lg border">
-        <Button
-          size="sm"
-          variant={calendarView === 'month' ? 'default' : 'ghost'}
-          className="rounded-none border-r px-2 sm:px-3"
-          onClick={() => setCalendarView('month')}
-        >
-          <CalendarIcon className="h-4 w-4" />
-          <span className="hidden sm:inline sm:ml-1.5">Miesiąc</span>
+      <div className="flex items-center gap-1 shrink-0">
+        <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8" onClick={handlePreviousDate}>
+          <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Button
-          size="sm"
-          variant={calendarView === 'week' ? 'default' : 'ghost'}
-          className="rounded-none border-r px-2 sm:px-3"
-          onClick={() => setCalendarView('week')}
-        >
-          <Grid3x3 className="h-4 w-4" />
-          <span className="hidden sm:inline sm:ml-1.5">Tydzień</span>
-        </Button>
-        <Button
-          size="sm"
-          variant={calendarView === 'agenda' ? 'default' : 'ghost'}
-          className="rounded-none px-2 sm:px-3"
-          onClick={() => setCalendarView('agenda')}
-        >
-          <List className="h-4 w-4" />
-          <span className="hidden sm:inline sm:ml-1.5">Agenda</span>
+        <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8" onClick={handleNextDate}>
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
 
-      {onAddEvent && (
-        <Button onClick={onAddEvent} size="sm" className="shrink-0">
-          + Dodaj
-        </Button>
-      )}
+      <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="inline-flex shrink-0 overflow-hidden rounded-lg border">
+          <Button
+            size="sm"
+            variant={calendarView === 'month' ? 'default' : 'ghost'}
+            className="rounded-none border-r px-2 sm:px-3"
+            onClick={() => setCalendarView('month')}
+          >
+            <CalendarIcon className="h-4 w-4" />
+            <span className="hidden sm:inline sm:ml-1.5">Miesiąc</span>
+          </Button>
+          <Button
+            size="sm"
+            variant={calendarView === 'week' ? 'default' : 'ghost'}
+            className="rounded-none border-r px-2 sm:px-3"
+            onClick={() => setCalendarView('week')}
+          >
+            <Grid3x3 className="h-4 w-4" />
+            <span className="hidden sm:inline sm:ml-1.5">Tydzień</span>
+          </Button>
+          <Button
+            size="sm"
+            variant={calendarView === 'agenda' ? 'default' : 'ghost'}
+            className="rounded-none px-2 sm:px-3"
+            onClick={() => setCalendarView('agenda')}
+          >
+            <List className="h-4 w-4" />
+            <span className="hidden sm:inline sm:ml-1.5">Agenda</span>
+          </Button>
+        </div>
+
+        {onAddEvent && (
+          <Button onClick={onAddEvent} size="sm" className="shrink-0 ml-auto">
+            + Dodaj
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

@@ -1,12 +1,13 @@
 'use client'
 
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Calendar, Views, dateFnsLocalizer, Messages, SlotInfo } from 'react-big-calendar'
 import * as dateFns from 'date-fns'
 import { pl } from 'date-fns/locale'
 import { useRentals } from '@/hooks/useRentals'
 import { useAuth } from '@/hooks/useAuth'
 import { useUIStore } from '@/store/ui.store'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { CalendarHeader } from './CalendarHeader'
 import { RentalDetailDialog } from '@/components/rentals/RentalDetailDialog'
 import { RentalForm } from '@/components/rentals/RentalForm'
@@ -69,9 +70,17 @@ export function CalendarView() {
   const { rentals = [], isLoading } = useRentals()
   const { user: currentUser } = useAuth()
   const { selectedDate, calendarView, setSelectedDate, setCalendarView } = useUIStore()
+  const isMobile = useIsMobile()
   const [selectedRental, setSelectedRental] = useState<Rental | null>(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formInitialDate, setFormInitialDate] = useState<string>('')
+
+  // Auto-switch to agenda on mobile, month on desktop
+  useEffect(() => {
+    if (isMobile && calendarView === 'month') {
+      setCalendarView('agenda')
+    }
+  }, [isMobile]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const canManage = currentUser?.role === 'admin' || currentUser?.role === 'owner'
 

@@ -34,12 +34,14 @@ import {
 import {
   Search,
   Plus,
+  ChevronRight,
 } from 'lucide-react'
 import { Rental } from '@/lib/types'
 import { STATUS_DISPLAY, STATUS_COLORS, STATUS_OPTIONS } from '@/lib/constants'
 import { formatPrice } from '@/lib/utils'
 import { RentalForm } from '@/components/rentals/RentalForm'
 import { RentalDetailDialog } from '@/components/rentals/RentalDetailDialog'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export default function RentalsPage() {
   const { rentals, isLoading, error } = useRentals()
@@ -57,6 +59,7 @@ export default function RentalsPage() {
   const [rentalToEdit, setRentalToEdit] = useState<Rental | null>(null)
 
   const canManage = currentUser?.role === 'admin' || currentUser?.role === 'owner'
+  const isMobile = useIsMobile()
 
   const getAttractionName = (id: string) => {
     const attr = attractions.find((a) => a.id === id)
@@ -207,7 +210,72 @@ export default function RentalsPage() {
               : 'Brak rezerwacji w bazie.'}
           </CardContent>
         </Card>
+      ) : isMobile ? (
+        /* ===== Mobile: card list ===== */
+        <div className="space-y-2">
+          {filteredRentals.map((rental) => (
+            <Card
+              key={rental.id}
+              className="cursor-pointer active:bg-muted/50 transition-colors"
+              onClick={() => setSelectedRental(rental)}
+            >
+              <CardContent className="p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{rental.clientName}</span>
+                      <Badge
+                        className="text-[10px] px-1.5 py-0"
+                        style={{
+                          backgroundColor: `${STATUS_COLORS[rental.status]}20`,
+                          color: STATUS_COLORS[rental.status],
+                          borderColor: `${STATUS_COLORS[rental.status]}40`,
+                        }}
+                        variant="outline"
+                      >
+                        {STATUS_DISPLAY[rental.status]}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(rental.date + 'T00:00:00').toLocaleDateString('pl-PL', {
+                        day: 'numeric',
+                        month: 'long',
+                        weekday: 'short',
+                      })}
+                      {' · '}
+                      {rental.setupTime}–{rental.teardownTime}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate mt-0.5">
+                      {rental.address}
+                    </div>
+                    {rental.attractionIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {rental.attractionIds.slice(0, 3).map((id) => (
+                          <Badge key={id} variant="secondary" className="text-[10px] px-1.5 py-0">
+                            {getAttractionName(id)}
+                          </Badge>
+                        ))}
+                        {rental.attractionIds.length > 3 && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                            +{rental.attractionIds.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end shrink-0">
+                    {canManage && (
+                      <span className="font-semibold text-sm">{formatPrice(rental.totalCost ?? 0)}</span>
+                    )}
+                    <ChevronRight className="h-4 w-4 text-muted-foreground mt-1" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : (
+        /* ===== Desktop: table ===== */
         <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <Table>
