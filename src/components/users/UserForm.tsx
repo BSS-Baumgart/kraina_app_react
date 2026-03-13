@@ -34,7 +34,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { useUpdateUser, useCreateUser } from '@/hooks/useUsers'
+import { useUpdateUser, useCreateUser, useChangePassword } from '@/hooks/useUsers'
 import { AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -49,6 +49,7 @@ export function UserForm(props: UserFormProps) {
 
   const updateMutation = useUpdateUser()
   const createMutation = useCreateUser()
+  const changePasswordMutation = useChangePassword()
 
   const form = useForm<CreateUserFormInput>({
     resolver: createZodResolver<CreateUserFormInput>(
@@ -117,10 +118,29 @@ export function UserForm(props: UserFormProps) {
       )
     } else if (employee) {
       const { password, ...updates } = values
-      updateMutation.mutate(
-        { id: employee.id, updates },
-        { onSuccess: () => onSuccess?.() }
+      const promises: Promise<void>[] = []
+
+      promises.push(
+        new Promise((resolve, reject) => {
+          updateMutation.mutate(
+            { id: employee.id, updates },
+            { onSuccess: () => resolve(), onError: reject }
+          )
+        })
       )
+
+      if (password && password.length >= 6) {
+        promises.push(
+          new Promise((resolve, reject) => {
+            changePasswordMutation.mutate(
+              { userId: employee.id, password },
+              { onSuccess: () => resolve(), onError: reject }
+            )
+          })
+        )
+      }
+
+      Promise.all(promises).then(() => onSuccess?.())
     }
   }
 
@@ -133,7 +153,7 @@ export function UserForm(props: UserFormProps) {
     }
   }
 
-  const isPending = updateMutation.isPending || createMutation.isPending
+  const isPending = updateMutation.isPending || createMutation.isPending || changePasswordMutation.isPending
   const hasErrors = Object.keys(form.formState.errors).length > 0
 
   return (
@@ -209,24 +229,24 @@ export function UserForm(props: UserFormProps) {
             )}
           />
 
-          {isCreating && (
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Hasło <span className="text-destructive">*</span></FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="Min. 6 znaków" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Hasło tymczasowe — użytkownik powinien je zmienić po pierwszym logowaniu.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem className="md:col-span-2">
+                <FormLabel>Hasło {isCreating && <span className="text-destructive">*</span>}</FormLabel>
+                <FormControl>
+                  <Input type="password" placeholder="Min. 6 znaków" {...field} />
+                </FormControl>
+                <FormDescription>
+                  {isCreating
+                    ? 'Hasło tymczasowe — użytkownik powinien je zmienić po pierwszym logowaniu.'
+                    : 'Pozostaw puste, aby nie zmieniać hasła.'}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
