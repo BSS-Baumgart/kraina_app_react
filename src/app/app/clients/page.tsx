@@ -96,48 +96,48 @@ export default function ClientsPage() {
 
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-500">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-full bg-primary/10 p-2">
-              <Users className="h-5 w-5 text-primary" />
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="rounded-full bg-primary/10 p-1.5 sm:p-2">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-10" /> : globalStats.totalClients}</div>
-              <div className="text-xs text-muted-foreground">Klientów</div>
+              <div className="text-lg sm:text-2xl font-bold">{isLoading ? <Skeleton className="h-6 sm:h-7 w-8 sm:w-10" /> : globalStats.totalClients}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">Klientów</div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-full bg-green-500/10 p-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="rounded-full bg-green-500/10 p-1.5 sm:p-2">
+              <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
             </div>
             <div>
-              <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-10" /> : globalStats.returning}</div>
-              <div className="text-xs text-muted-foreground">Powracających</div>
+              <div className="text-lg sm:text-2xl font-bold">{isLoading ? <Skeleton className="h-6 sm:h-7 w-8 sm:w-10" /> : globalStats.returning}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">Powracających</div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-full bg-blue-500/10 p-2">
-              <ClipboardList className="h-5 w-5 text-blue-500" />
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="rounded-full bg-blue-500/10 p-1.5 sm:p-2">
+              <ClipboardList className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
             </div>
             <div>
-              <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-10" /> : globalStats.totalRentals}</div>
-              <div className="text-xs text-muted-foreground">Rezerwacji</div>
+              <div className="text-lg sm:text-2xl font-bold">{isLoading ? <Skeleton className="h-6 sm:h-7 w-8 sm:w-10" /> : globalStats.totalRentals}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">Rezerwacji</div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-full bg-yellow-500/10 p-2">
-              <DollarSign className="h-5 w-5 text-yellow-500" />
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="rounded-full bg-yellow-500/10 p-1.5 sm:p-2">
+              <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
             </div>
             <div>
-              <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-7 w-10" /> : formatPrice(globalStats.totalRevenue)}</div>
-              <div className="text-xs text-muted-foreground">Przychód łączny</div>
+              <div className="text-lg sm:text-2xl font-bold">{isLoading ? <Skeleton className="h-6 sm:h-7 w-8 sm:w-10" /> : formatPrice(globalStats.totalRevenue)}</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">Przychód łączny</div>
             </div>
           </CardContent>
         </Card>
@@ -167,7 +167,7 @@ export default function ClientsPage() {
         </div>
       ) : isMobile ? (
         /* ===== Mobile: card list ===== */
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {filteredClients.map((client) => {
             const s = clientStats.get(client.id)
             return (
@@ -177,35 +177,40 @@ export default function ClientsPage() {
                 onClick={() => setSelectedClient(client)}
               >
                 <CardContent className="p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-sm">{client.name}</div>
+                  {/* Header row */}
+                  <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                    <span className="font-semibold text-sm truncate">{client.name}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                  </div>
+                  {/* Key-value rows */}
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Telefon</span>
                       <a
                         href={`tel:${client.phone}`}
-                        className="flex items-center gap-1 text-xs text-primary mt-0.5"
+                        className="flex items-center gap-1 text-primary font-medium"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <Phone className="h-3 w-3" />
                         {client.phone}
                       </a>
-                      {client.address && (
-                        <div className="text-xs text-muted-foreground truncate mt-0.5">
-                          {client.address}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-3 mt-1.5">
-                        <span className="text-xs text-muted-foreground">
-                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0 mr-1">
-                            {s?.rentalCount ?? 0}
-                          </Badge>
-                          rez.
-                        </span>
-                        <span className="text-xs font-medium">
-                          {formatPrice(s?.totalRevenue ?? 0)}
-                        </span>
-                      </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+                    {client.address && (
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-muted-foreground shrink-0">Adres</span>
+                        <span className="text-right truncate">{client.address}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Rezerwacje</span>
+                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                        {s?.rentalCount ?? 0}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Przychód</span>
+                      <span className="font-semibold">{formatPrice(s?.totalRevenue ?? 0)}</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

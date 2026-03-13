@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Plus, Trash2, Fuel, Wrench, UtensilsCrossed, Package, Star, MoreHorizontal } from 'lucide-react'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   fuel: <Fuel className="h-4 w-4" />,
@@ -73,6 +74,7 @@ export default function CostsPage() {
   const deleteExpense = useDeleteExpense()
 
   const canManage = currentUser?.role === 'admin' || currentUser?.role === 'owner'
+  const isMobile = useIsMobile()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [filterCategory, setFilterCategory] = useState<string>('all')
@@ -138,25 +140,25 @@ export default function CostsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Suma kosztów</CardTitle>
+          <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">Suma kosztów</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-destructive">{formatPrice(totalFiltered)}</p>
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <p className="text-lg sm:text-2xl font-bold text-destructive">{formatPrice(totalFiltered)}</p>
           </CardContent>
         </Card>
         {Object.entries(categoryTotals).map(([cat, total]) => (
           <Card key={cat}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1.5 sm:gap-2">
                 {CATEGORY_ICONS[cat]}
                 {EXPENSE_CATEGORIES[cat as ExpenseCategory]}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <p className="text-lg font-bold">{formatPrice(total)}</p>
+            <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+              <p className="text-base sm:text-lg font-bold">{formatPrice(total)}</p>
             </CardContent>
           </Card>
         ))}
@@ -245,7 +247,77 @@ export default function CostsPage() {
         <div className="text-center py-8 text-muted-foreground">Ładowanie...</div>
       ) : filteredExpenses.length === 0 ? (
         <div className="text-center py-8 text-muted-foreground">Brak kosztów w wybranym okresie.</div>
+      ) : isMobile ? (
+        /* ===== Mobile: card list ===== */
+        <div className="space-y-2.5">
+          {filteredExpenses.map((expense) => (
+            <Card key={expense.id}>
+              <CardContent className="p-3">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                  <Badge
+                    variant="outline"
+                    style={{
+                      borderColor: `${CATEGORY_COLORS[expense.category]}40`,
+                      color: CATEGORY_COLORS[expense.category],
+                      backgroundColor: `${CATEGORY_COLORS[expense.category]}10`,
+                    }}
+                    className="flex items-center gap-1 text-[10px]"
+                  >
+                    {CATEGORY_ICONS[expense.category]}
+                    {EXPENSE_CATEGORIES[expense.category]}
+                  </Badge>
+                  <span className="font-bold text-sm">{formatPrice(expense.amount)}</span>
+                </div>
+                {/* Key-value rows */}
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Data</span>
+                    <span>{new Date(expense.date + 'T00:00:00').toLocaleDateString('pl-PL')}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground shrink-0">Opis</span>
+                    <span className="text-right truncate">{expense.description}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Dodał</span>
+                    <span>{getEmployeeName(expense.createdBy)}</span>
+                  </div>
+                </div>
+                {/* Delete button */}
+                <div className="flex justify-end mt-2 pt-2 border-t">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-destructive gap-1">
+                        <Trash2 className="h-3 w-3" />
+                        Usuń
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Usunąć koszt?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {expense.description} — {formatPrice(expense.amount)}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Anuluj</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                          onClick={() => deleteExpense.mutate(expense.id)}
+                        >
+                          Usuń
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       ) : (
+        /* ===== Desktop: table ===== */
         <div className="border rounded-lg">
           <Table>
             <TableHeader>

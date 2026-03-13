@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { User as UserIcon, Phone, MapPin, Mail, Shield, Wrench, Wallet, CheckCircle2, Minus } from 'lucide-react'
+import { User as UserIcon, Phone, MapPin, Mail, Shield, Wrench, Wallet, CheckCircle2, Minus, Calendar, DollarSign } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { supabase } from '@/lib/supabase'
 import { createZodResolver } from '@/lib/form-utils'
 import { toast } from 'sonner'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { useUsers } from '@/hooks/useUsers'
 import {
   Form,
   FormControl,
@@ -45,6 +47,8 @@ type ProfileFormValues = z.infer<typeof profileSchema>
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore()
   const { rentals } = useRentals()
+  const { users } = useUsers()
+  const isMobile = useIsMobile()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -135,31 +139,67 @@ export default function ProfilePage() {
     ? user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : 'KZ'
 
-  const myAssignments = useMemo(() => {
+  const isManager = user?.role === 'admin' || user?.role === 'owner'
+
+  const recentAssignments = useMemo(() => {
     if (!user) return []
+
+    if (isManager) {
+      // Admins/owners see all recent rentals with any employee assigned
+      return rentals
+        .filter((r) => r.assignedEmployees?.some((a) => a.didAssembly || a.didDisassembly))
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 6)
+        .map((r) => {
+          const totalEarnings = r.assignedEmployees
+            .filter((a) => a.didAssembly || a.didDisassembly)
+            .reduce((sum, a) => {
+              const assembly = a.didAssembly ? r.attractionIds.length * (a.assemblyRateSnapshot ?? 0) : 0
+              const disassembly = a.didDisassembly ? r.attractionIds.length * (a.disassemblyRateSnapshot ?? 0) : 0
+              return sum + assembly + disassembly
+            }, 0)
+          const employeeNames = r.assignedEmployees
+            .filter((a) => a.didAssembly || a.didDisassembly)
+            .map((a) => {
+              const emp = users.find((u) => u.id === a.employeeId)
+              return emp ? `${emp.firstName} ${emp.lastName}` : 'Nieznany'
+            })
+          return {
+            id: r.id,
+            date: r.date,
+            address: r.address,
+            clientName: r.clientName,
+            didAssembly: r.assignedEmployees.some((a) => a.didAssembly),
+            didDisassembly: r.assignedEmployees.some((a) => a.didDisassembly),
+            earnings: totalEarnings,
+            employeeNames,
+          }
+        })
+    }
+
+    // Regular employees see only their own
     return rentals
-      .filter((r) =>
-        r.assignedEmployees?.some((a) => a.employeeId === user.id)
-      )
+      .filter((r) => r.assignedEmployees?.some((a) => a.employeeId === user.id && (a.didAssembly || a.didDisassembly)))
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 6)
       .map((r) => {
         const assignment = r.assignedEmployees.find((a) => a.employeeId === user.id)!
+        const assembly = assignment.didAssembly ? r.attractionIds.length * (assignment.assemblyRateSnapshot ?? 0) : 0
+        const disassembly = assignment.didDisassembly ? r.attractionIds.length * (assignment.disassemblyRateSnapshot ?? 0) : 0
         return {
           id: r.id,
           date: r.date,
           address: r.address,
+          clientName: r.clientName,
           didAssembly: assignment.didAssembly,
           didDisassembly: assignment.didDisassembly,
-          attractionCount: r.attractionIds.length,
-          earnings: r.attractionIds.length * (
-            (assignment.didAssembly ? (assignment.assemblyRateSnapshot ?? 0) : 0) +
-            (assignment.didDisassembly ? (assignment.disassemblyRateSnapshot ?? 0) : 0)
-          ),
+          earnings: assembly + disassembly,
+          employeeNames: [] as string[],
         }
       })
-      .sort((a, b) => b.date.localeCompare(a.date))
-  }, [rentals, user])
+  }, [rentals, user, users, isManager])
 
-  const totalEarnings = useMemo(() => myAssignments.reduce((sum, a) => sum + a.earnings, 0), [myAssignments])
+  const totalEarnings = useMemo(() => recentAssignments.reduce((sum, a) => sum + a.earnings, 0), [recentAssignments])
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -379,58 +419,115 @@ export default function ProfilePage() {
           <Card>
             <CardHeader className="py-4">
               <CardTitle className="text-lg">Ostatnie realizacje</CardTitle>
-              <CardDescription>Twoja aktywność (montaże i demontaże)</CardDescription>
+              <CardDescription>
+                {isManager ? 'Ostatnie realizacje wszystkich pracowników' : 'Twoja aktywność (montaże i demontaże)'}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              {myAssignments.length === 0 ? (
+              {recentAssignments.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   Brak zapisanych realizacji. Zaznacz montaż lub demontaż w szczegółach rezerwacji.
                 </p>
               ) : (
                 <>
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-muted/50">
-                          <TableHead>Data</TableHead>
-                          <TableHead>Lokalizacja</TableHead>
-                          <TableHead className="text-center w-24">Montaż</TableHead>
-                          <TableHead className="text-center w-24">Demontaż</TableHead>
-                          <TableHead className="text-right w-28">Wypłata</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {myAssignments.slice(0, 10).map((a) => (
-                          <TableRow key={a.id}>
-                            <TableCell className="font-medium">
-                              {new Date(a.date + 'T00:00:00').toLocaleDateString('pl-PL', {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              })}
-                            </TableCell>
-                            <TableCell className="max-w-[200px] truncate">{a.address}</TableCell>
-                            <TableCell className="text-center">
-                              {a.didAssembly
-                                ? <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto" />
-                                : <Minus className="h-4 w-4 text-muted-foreground mx-auto" />}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {a.didDisassembly
-                                ? <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto" />
-                                : <Minus className="h-4 w-4 text-muted-foreground mx-auto" />}
-                            </TableCell>
-                            <TableCell className="text-right font-medium text-green-600">
-                              {a.earnings > 0 ? `${a.earnings.toFixed(2)} zł` : '—'}
-                            </TableCell>
+                  {isMobile ? (
+                    /* ===== Mobile: card list ===== */
+                    <div className="space-y-2.5">
+                      {recentAssignments.map((a) => (
+                        <Card key={a.id} className="border">
+                          <CardContent className="p-3">
+                            {/* Header */}
+                            <div className="flex items-center justify-between mb-2 pb-2 border-b">
+                              <span className="font-semibold text-sm">
+                                {new Date(a.date + 'T00:00:00').toLocaleDateString('pl-PL', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </span>
+                              <span className={`font-bold text-sm ${a.earnings > 0 ? 'text-green-600' : ''}`}>
+                                {a.earnings > 0 ? `${a.earnings.toFixed(2)} zł` : '—'}
+                              </span>
+                            </div>
+                            {/* Key-value rows */}
+                            <div className="space-y-1.5 text-xs">
+                              {isManager && a.employeeNames.length > 0 && (
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-muted-foreground">Pracownik</span>
+                                  <span className="font-medium text-right truncate">{a.employeeNames.join(', ')}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-muted-foreground shrink-0">Adres</span>
+                                <span className="text-right truncate">{a.address}</span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">Montaż</span>
+                                {a.didAssembly
+                                  ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  : <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">Demontaż</span>
+                                {a.didDisassembly
+                                  ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  : <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    /* ===== Desktop: table ===== */
+                    <div className="rounded-md border">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-muted/50">
+                            <TableHead>Data</TableHead>
+                            {isManager && <TableHead>Pracownik</TableHead>}
+                            <TableHead>Lokalizacja</TableHead>
+                            <TableHead className="text-center w-24">Montaż</TableHead>
+                            <TableHead className="text-center w-24">Demontaż</TableHead>
+                            <TableHead className="text-right w-28">Wypłata</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {recentAssignments.map((a) => (
+                            <TableRow key={a.id}>
+                              <TableCell className="font-medium">
+                                {new Date(a.date + 'T00:00:00').toLocaleDateString('pl-PL', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                })}
+                              </TableCell>
+                              {isManager && (
+                                <TableCell className="text-sm">{a.employeeNames.join(', ')}</TableCell>
+                              )}
+                              <TableCell className="max-w-[200px] truncate">{a.address}</TableCell>
+                              <TableCell className="text-center">
+                                {a.didAssembly
+                                  ? <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto" />
+                                  : <Minus className="h-4 w-4 text-muted-foreground mx-auto" />}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                {a.didDisassembly
+                                  ? <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto" />
+                                  : <Minus className="h-4 w-4 text-muted-foreground mx-auto" />}
+                              </TableCell>
+                              <TableCell className="text-right font-medium text-green-600">
+                                {a.earnings > 0 ? `${a.earnings.toFixed(2)} zł` : '—'}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between mt-4 px-1">
                     <p className="text-xs text-muted-foreground">
-                      Montaż: {(user.assemblyRate ?? 0).toFixed(2)} zł · Demontaż: {(user.disassemblyRate ?? 0).toFixed(2)} zł × atrakcja
+                      {isManager ? 'Łączne wypłaty z ostatnich realizacji' : `Montaż: ${(user?.assemblyRate ?? 0).toFixed(2)} zł · Demontaż: ${(user?.disassemblyRate ?? 0).toFixed(2)} zł × atrakcja`}
                     </p>
                     <div className="text-sm font-semibold">
                       Suma: <span className="text-green-600">{totalEarnings.toFixed(2)} zł</span>

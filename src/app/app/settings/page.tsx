@@ -12,10 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Globe, Clock, Shield, LifeBuoy, Bell, Save, Moon, Sun, Monitor, Truck, Building2, MapPin } from "lucide-react"
 import { useSettingsStore, getFullCompanyAddress } from "@/store/settings.store"
 import { toast } from "sonner"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const { transport, company, setTransportSettings, setCompanySettings } = useSettingsStore()
+  const isMobile = useIsMobile()
+  const [activeTab, setActiveTab] = useState('general')
   const [pricePerKm, setPricePerKm] = useState(String(transport.pricePerKm))
   const [freeKmThreshold, setFreeKmThreshold] = useState(String(transport.freeKmThreshold))
   const [companyStreet, setCompanyStreet] = useState(company.street)
@@ -26,39 +29,62 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Ustawienia</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Ustawienia</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Zarządzaj ustawieniami aplikacji, strefą czasową i preferencjami.
         </p>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="bg-muted">
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <Globe className="h-4 w-4" />
-            Ogólne
-          </TabsTrigger>
-          <TabsTrigger value="company" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
-            Firma
-          </TabsTrigger>
-          <TabsTrigger value="transport" className="flex items-center gap-2">
-            <Truck className="h-4 w-4" />
-            Transport
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
-            Powiadomienia
-          </TabsTrigger>
-          <TabsTrigger value="privacy" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Prywatność
-          </TabsTrigger>
-          <TabsTrigger value="help" className="flex items-center gap-2">
-            <LifeBuoy className="h-4 w-4" />
-            Pomoc
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        {/* Mobile: Select dropdown */}
+        {isMobile ? (
+          <Select value={activeTab} onValueChange={setActiveTab}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="general">
+                <span className="flex items-center gap-2"><Globe className="h-4 w-4" /> Ogólne</span>
+              </SelectItem>
+              <SelectItem value="company">
+                <span className="flex items-center gap-2"><Building2 className="h-4 w-4" /> Firma</span>
+              </SelectItem>
+              <SelectItem value="transport">
+                <span className="flex items-center gap-2"><Truck className="h-4 w-4" /> Transport</span>
+              </SelectItem>
+              <SelectItem value="notifications">
+                <span className="flex items-center gap-2"><Bell className="h-4 w-4" /> Powiadomienia</span>
+              </SelectItem>
+              <SelectItem value="privacy">
+                <span className="flex items-center gap-2"><Shield className="h-4 w-4" /> Prywatność</span>
+              </SelectItem>
+              <SelectItem value="help">
+                <span className="flex items-center gap-2"><LifeBuoy className="h-4 w-4" /> Pomoc</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        ) : (
+          <TabsList className="bg-muted">
+            <TabsTrigger value="general" className="flex items-center gap-2">
+              <Globe className="h-4 w-4" /> Ogólne
+            </TabsTrigger>
+            <TabsTrigger value="company" className="flex items-center gap-2">
+              <Building2 className="h-4 w-4" /> Firma
+            </TabsTrigger>
+            <TabsTrigger value="transport" className="flex items-center gap-2">
+              <Truck className="h-4 w-4" /> Transport
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Bell className="h-4 w-4" /> Powiadomienia
+            </TabsTrigger>
+            <TabsTrigger value="privacy" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" /> Prywatność
+            </TabsTrigger>
+            <TabsTrigger value="help" className="flex items-center gap-2">
+              <LifeBuoy className="h-4 w-4" /> Pomoc
+            </TabsTrigger>
+          </TabsList>
+        )}
 
         <TabsContent value="general" className="space-y-4">
           <Card>
@@ -73,7 +99,7 @@ export default function SettingsPage() {
                 <div className="grid gap-2">
                   <Label>Motyw</Label>
                   <Select value={theme} onValueChange={setTheme}>
-                    <SelectTrigger className="w-[300px]">
+                    <SelectTrigger className="w-full sm:w-[300px]">
                       <SelectValue placeholder="Wybierz motyw" />
                     </SelectTrigger>
                     <SelectContent>
@@ -99,7 +125,7 @@ export default function SettingsPage() {
                 <div className="grid gap-2">
                   <Label>Język aplikacji</Label>
                   <Select defaultValue="pl">
-                    <SelectTrigger className="w-[300px]">
+                    <SelectTrigger className="w-full sm:w-[300px]">
                       <SelectValue placeholder="Wybierz język" />
                     </SelectTrigger>
                     <SelectContent>
@@ -114,7 +140,7 @@ export default function SettingsPage() {
                     Strefa czasowa
                   </Label>
                   <Select defaultValue="europe-warsaw">
-                    <SelectTrigger className="w-[300px]">
+                    <SelectTrigger className="w-full sm:w-[300px]">
                       <SelectValue placeholder="Wybierz strefę czasową" />
                     </SelectTrigger>
                     <SelectContent>
