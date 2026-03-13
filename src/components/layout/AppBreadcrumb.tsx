@@ -42,7 +42,7 @@ export function AppBreadcrumb() {
 
   return (
     <Breadcrumb>
-      <BreadcrumbList>
+      <BreadcrumbList className="flex-nowrap overflow-x-auto">
         {segments.map((segment, index) => {
           const href = `/${segments.slice(0, index + 1).join('/')}`
           const isLast = index === segments.length - 1

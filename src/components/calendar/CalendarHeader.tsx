@@ -62,10 +62,10 @@ export function CalendarHeader({ events, onAddEvent }: CalendarHeaderProps) {
         </p>
       </div>
 
-      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handlePreviousDate}>
+      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8 shrink-0" onClick={handlePreviousDate}>
         <ChevronLeft className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={handleNextDate}>
+      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8 shrink-0" onClick={handleNextDate}>
         <ChevronRight className="h-4 w-4" />
       </Button>
 

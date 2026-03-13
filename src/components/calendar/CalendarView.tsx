@@ -12,11 +12,11 @@ import { RentalDetailDialog } from '@/components/rentals/RentalDetailDialog'
 import { RentalForm } from '@/components/rentals/RentalForm'
 import { Rental } from '@/lib/types'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import '@/styles/calendar.css'
 
@@ -166,7 +166,7 @@ export function CalendarView() {
         events={events}
         startAccessor="start"
         endAccessor="end"
-        style={{ height: 'calc(100svh - 225px)', minHeight: '400px' }}
+        style={{ height: 'calc(100svh - 200px)', minHeight: '350px' }}
         view={calendarView as any}
         onView={handleViewChange}
         date={selectedDate}
@@ -193,20 +193,20 @@ export function CalendarView() {
       />
 
       {canManage && (
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Nowa rezerwacja</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
+        <ResponsiveDialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <ResponsiveDialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+            <ResponsiveDialogHeader>
+              <ResponsiveDialogTitle>Nowa rezerwacja</ResponsiveDialogTitle>
+            </ResponsiveDialogHeader>
+            <div className="py-2 sm:py-4 px-4 sm:px-0">
               <RentalForm
                 initialDate={formInitialDate || undefined}
                 onSuccess={() => setIsFormOpen(false)}
                 onCancel={() => setIsFormOpen(false)}
               />
             </div>
-          </DialogContent>
-        </Dialog>
+          </ResponsiveDialogContent>
+        </ResponsiveDialog>
       )}
     </div>
   )

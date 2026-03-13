@@ -90,7 +90,7 @@ export function RentalFormStepAttractions({
               Brak dostępnych atrakcji w wybranym terminie.
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 mt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[250px] sm:max-h-[300px] overflow-y-auto pr-1 mt-2">
               {availableAttractions.map((attraction) => {
                 const isSelected = selectedIds.includes(attraction.id)
                 return (

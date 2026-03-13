@@ -11,11 +11,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@/components/ui/responsive-dialog'
 import {
   Table,
   TableBody,
@@ -95,7 +95,7 @@ export default function RentalsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in-50 duration-500">
+    <div className="space-y-4 sm:space-y-6 animate-in fade-in-50 duration-500">
       {canManage && (
         <div className="flex justify-end">
           <Button
@@ -111,7 +111,7 @@ export default function RentalsPage() {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -133,51 +133,53 @@ export default function RentalsPage() {
             ))}
           </SelectContent>
         </Select>
-        <Input
-          type="date"
-          value={dateFrom}
-          onChange={(e) => setDateFrom(e.target.value)}
-          className="w-full sm:w-[160px]"
-          placeholder="Od"
-        />
-        <Input
-          type="date"
-          value={dateTo}
-          onChange={(e) => setDateTo(e.target.value)}
-          className="w-full sm:w-[160px]"
-          placeholder="Do"
-        />
+        <div className="grid grid-cols-2 gap-2 sm:contents">
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full sm:w-[160px]"
+            placeholder="Od"
+          />
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full sm:w-[160px]"
+            placeholder="Do"
+          />
+        </div>
       </div>
 
-      <div className={`grid grid-cols-2 gap-4 ${canManage ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
+      <div className={`grid grid-cols-2 gap-2 sm:gap-4 ${canManage ? 'sm:grid-cols-5' : 'sm:grid-cols-4'}`}>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-foreground">{stats.total}</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold text-foreground">{stats.total}</div>
             <div className="text-xs text-muted-foreground">Wszystkie</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold" style={{ color: STATUS_COLORS.pending }}>{stats.pending}</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold" style={{ color: STATUS_COLORS.pending }}>{stats.pending}</div>
             <div className="text-xs text-muted-foreground">Oczekujące</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold" style={{ color: STATUS_COLORS.confirmed }}>{stats.confirmed}</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold" style={{ color: STATUS_COLORS.confirmed }}>{stats.confirmed}</div>
             <div className="text-xs text-muted-foreground">Potwierdzone</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold" style={{ color: STATUS_COLORS.completed }}>{stats.completed}</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-xl sm:text-2xl font-bold" style={{ color: STATUS_COLORS.completed }}>{stats.completed}</div>
             <div className="text-xs text-muted-foreground">Zakończone</div>
           </CardContent>
         </Card>
         {canManage && (
           <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-primary">{formatPrice(stats.revenue)}</div>
+            <CardContent className="p-3 sm:p-4 text-center">
+              <div className="text-xl sm:text-2xl font-bold text-primary">{formatPrice(stats.revenue)}</div>
               <div className="text-xs text-muted-foreground">Przychód</div>
             </CardContent>
           </Card>
@@ -294,12 +296,12 @@ export default function RentalsPage() {
         } : undefined}
       />
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{rentalToEdit ? 'Edytuj rezerwację' : 'Nowa rezerwacja'}</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
+      <ResponsiveDialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <ResponsiveDialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{rentalToEdit ? 'Edytuj rezerwację' : 'Nowa rezerwacja'}</ResponsiveDialogTitle>
+          </ResponsiveDialogHeader>
+          <div className="py-2 sm:py-4 px-4 sm:px-0">
             <RentalForm
               rentalToEdit={rentalToEdit}
               onSuccess={() => {
@@ -311,8 +313,8 @@ export default function RentalsPage() {
               onCancel={() => setIsFormOpen(false)}
             />
           </div>
-        </DialogContent>
-      </Dialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
     </div>
   )
 }
