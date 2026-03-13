@@ -109,6 +109,28 @@ export function useCreateUser() {
   })
 }
 
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async ({ userId, password }: { userId: string; password: string }) => {
+      const res = await fetch(`/api/users/${userId}/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Błąd zmiany hasła')
+      return data
+    },
+    onSuccess: () => {
+      toast.success('Hasło zostało zmienione.')
+    },
+    onError: (error) => {
+      console.error(error)
+      toast.error(error.message || 'Wystąpił błąd podczas zmiany hasła.')
+    },
+  })
+}
+
 export function useToggleUserStatus() {
   const queryClient = useQueryClient()
 

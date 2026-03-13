@@ -17,6 +17,7 @@ export const userFormSchema = z.object({
   assemblyRate: z.coerce.number().min(0, 'Stawka nie może być ujemna'),
   disassemblyRate: z.coerce.number().min(0, 'Stawka nie może być ujemna'),
   isActive: z.boolean().default(true),
+  password: z.string().min(6, 'Hasło musi mieć co najmniej 6 znaków').optional().or(z.literal('')),
 })
 
 export type UserFormInput = z.infer<typeof userFormSchema>
