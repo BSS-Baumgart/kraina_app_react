@@ -78,6 +78,7 @@ export interface Rental {
   status: RentalStatus
   notes?: string
   contractPhotoUrl?: string
+  setupPhotoUrls?: string[]
   paymentType?: PaymentType
   hasInvoice?: boolean
   hasReceipt?: boolean
