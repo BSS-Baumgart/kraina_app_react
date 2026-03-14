@@ -40,6 +40,7 @@ function mapRental(rental: any): Rental {
     status: toAppStatus(rental.status),
     notes: rental.notes,
     contractPhotoUrl: rental.contract_photo_url,
+    setupPhotoUrls: rental.setup_photo_urls ?? [],
     paymentType: rental.payment_type ?? undefined,
     hasInvoice: rental.has_invoice ?? false,
     hasReceipt: rental.has_receipt ?? false,
@@ -154,6 +155,7 @@ export function useUpdateRental() {
       if (updates.notes !== undefined) mapped.notes = updates.notes
       if (updates.status !== undefined) mapped.status = toDbStatus(updates.status)
       if (updates.contractPhotoUrl !== undefined) mapped.contract_photo_url = updates.contractPhotoUrl
+      if (updates.setupPhotoUrls !== undefined) mapped.setup_photo_urls = updates.setupPhotoUrls
       if (updates.paymentType !== undefined) mapped.payment_type = updates.paymentType
       if (updates.hasInvoice !== undefined) mapped.has_invoice = updates.hasInvoice
       if (updates.hasReceipt !== undefined) mapped.has_receipt = updates.hasReceipt

@@ -4,7 +4,7 @@ import type { Rental } from '@/lib/types'
 import { STATUS_DISPLAY, STATUS_COLORS } from '@/lib/constants'
 import { formatPrice } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import { CalendarDays, Clock, Package, ArrowRight } from 'lucide-react'
+import { CalendarDays, Clock, Package, ArrowRight, Camera } from 'lucide-react'
 
 interface RentalRowProps {
   rental: Rental
@@ -49,6 +49,12 @@ export function RentalRow({ rental, showDate = true, canManage, formatDatePl, on
             <Package className="h-3 w-3" />
             {rental.attractionIds.length}
           </span>
+          {(rental.setupPhotoUrls?.length ?? 0) > 0 && (
+            <span className="flex items-center gap-1">
+              <Camera className="h-3 w-3" />
+              {rental.setupPhotoUrls!.length}
+            </span>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2 shrink-0">
