@@ -53,6 +53,7 @@ import {
   Upload,
   FileCheck,
   CreditCard,
+  ImagePlus,
 } from 'lucide-react'
 
 interface RentalDetailDialogProps {
@@ -73,6 +74,7 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
   const canManage = currentUser?.role === 'admin' || currentUser?.role === 'owner'
 
   const [isUploading, setIsUploading] = useState(false)
+  const [isUploadingSetup, setIsUploadingSetup] = useState(false)
 
   const [currentRental, setCurrentRental] = useState<Rental | null>(rental)
 
@@ -502,6 +504,130 @@ export function RentalDetailDialog({ rental, onClose, onEdit }: RentalDetailDial
                     {isUploading ? 'Przesyłanie...' : currentRental.contractPhotoUrl ? 'Zmień zdjęcie umowy' : 'Dodaj zdjęcie umowy'}
                   </Button>
                 </label>
+              </div>
+            </div>
+          )}
+
+          {/* ===== Setup Photos Section ===== */}
+          {currentUser && currentRental.status !== 'cancelled' && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Zdjęcia rozstawienia
+              </h3>
+              <div className="rounded-lg border p-4 space-y-3">
+                {(currentRental.setupPhotoUrls ?? []).length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {(currentRental.setupPhotoUrls ?? []).map((url, idx) => (
+                      <div key={idx} className="relative group">
+                        <a href={url} target="_blank" rel="noopener noreferrer">
+                          <img
+                            src={url}
+                            alt={`Rozstawienie ${idx + 1}`}
+                            className="rounded-md border aspect-square object-cover w-full"
+                          />
+                        </a>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 opacity-80 transition-opacity"
+                          disabled={isUploadingSetup || updateRentalMutation.isPending}
+                          onClick={() => {
+                            const updated = (currentRental.setupPhotoUrls ?? []).filter((_, i) => i !== idx)
+                            updateRentalMutation.mutate(
+                              { id: currentRental.id, updates: { setupPhotoUrls: updated } },
+                              {
+                                onSuccess: () => {
+                                  setCurrentRental({ ...currentRental, setupPhotoUrls: updated })
+                                  toast.success('Zdjęcie zostało usunięte.')
+                                },
+                              }
+                            )
+                          }}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-3">
+                    <ImagePlus className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Brak zdjęć rozstawienia</p>
+                  </div>
+                )}
+                {(currentRental.setupPhotoUrls ?? []).length < 3 && (
+                  <label className="block">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0]
+                        if (!file) return
+                        if (file.size > 5 * 1024 * 1024) {
+                          toast.error('Plik jest za duży (max 5 MB)')
+                          e.target.value = ''
+                          return
+                        }
+                        setIsUploadingSetup(true)
+                        try {
+                          const fileExt = file.name.split('.').pop()
+                          const fileName = `setup-${Date.now()}-${Math.random().toString(36).slice(2)}.${fileExt}`
+                          const filePath = `${currentRental.id}/${fileName}`
+
+                          const { error: uploadError } = await supabase.storage
+                            .from('contracts')
+                            .upload(filePath, file, { contentType: file.type })
+
+                          if (uploadError) throw uploadError
+
+                          const { data: urlData } = supabase.storage
+                            .from('contracts')
+                            .getPublicUrl(filePath)
+
+                          const publicUrl = urlData.publicUrl
+                          const updated = [...(currentRental.setupPhotoUrls ?? []), publicUrl]
+
+                          updateRentalMutation.mutate(
+                            { id: currentRental.id, updates: { setupPhotoUrls: updated } },
+                            {
+                              onSuccess: () => {
+                                setCurrentRental({ ...currentRental, setupPhotoUrls: updated })
+                                toast.success('Zdjęcie rozstawienia zostało dodane.')
+                              },
+                            }
+                          )
+                        } catch (err) {
+                          console.error(err)
+                          toast.error('Nie udało się przesłać zdjęcia.')
+                        } finally {
+                          setIsUploadingSetup(false)
+                          e.target.value = ''
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled={isUploadingSetup}
+                      onClick={(e) => {
+                        const input = (e.currentTarget.parentElement as HTMLLabelElement).querySelector('input')
+                        input?.click()
+                      }}
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      {isUploadingSetup ? 'Przesyłanie...' : `Dodaj zdjęcie (${(currentRental.setupPhotoUrls ?? []).length}/3)`}
+                    </Button>
+                  </label>
+                )}
+                <p className="text-[10px] text-muted-foreground">
+                  Max 3 zdjęcia, do 5 MB każde. Na telefonie automatycznie otworzy aparat.
+                </p>
               </div>
             </div>
           )}
